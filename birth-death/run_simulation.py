@@ -7,7 +7,8 @@ import pandas as pd
 
 from birth_death_model import BirthDeath
 from plots import bd_trajectory, histograms
-from utils import generate_tree, count_extinct_bd, get_tree_paths, get_cell_lifetime_values
+from utils import generate_tree, count_extinct_bd
+from cell_info import Cells
 
 """
 set up input parameters
@@ -56,13 +57,9 @@ generate binary tree
 """
 for k_i, bd in enumerate(bd_list):
     tree = generate_tree(bd, T, k_i)
-    paths = get_tree_paths(tree)
-    lifetime_values = get_cell_lifetime_values(tree)
-    print(lifetime_values)
-    lifetime_values.hist()
-    lifetime_values.hist(by=lifetime_values['is_alive'])
 
-    plt.show()
+    about_cell = Cells(bd, tree)
+
 """
 plot trajectories
 """

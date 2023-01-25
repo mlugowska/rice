@@ -36,6 +36,3 @@ def calculate_median_log_bd(df: pd.DataFrame):
 def get_tree_paths(tree):
     return tree.get_leaves_path()
 
-
-def get_cell_lifetime_values(tree):
-    return tree.get_birth_death_times()

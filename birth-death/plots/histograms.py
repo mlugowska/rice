@@ -44,5 +44,3 @@ def N_freq_in_random_timesteps(df: pd.DataFrame):
     fig.supxlabel('N')
     fig.supylabel('Frequency')
 
-
-# def cell_lifetimes(df, k):

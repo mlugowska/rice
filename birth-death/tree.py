@@ -83,16 +83,11 @@ class BDTree:
         self.tree.write(features=['name', 'dist'], format_root_node=True,
                         outfile=f'/Users/magdalena/PycharmProjects/rice/birth-death/{k_i + 1}-N-{bd.N}.txt')
 
-    def get_leaves_path(self):
+    def get_leaves_path(self, leaves, paths, leaf_nodes):
         """
         get all the nodes up to the last one
         :return:
         """
-
-        leaves = self.tree.get_leaves()
-        paths = {x.name: list() for x in leaves}
-        nodes = {x: list() for x in leaves}
-
         for leaf in leaves:
             if leaf.is_root():
                 continue
@@ -100,32 +95,67 @@ class BDTree:
 
             while not moving_node.is_root():
                 paths[leaf.name].append(moving_node.name)
-                nodes[leaf].append(moving_node)
+                leaf_nodes[leaf].append(moving_node)
                 moving_node = moving_node.up
 
             paths[leaf.name].append(moving_node.name)
-            nodes[leaf].append(moving_node)
+            leaf_nodes[leaf].append(moving_node)
 
-        return paths, nodes
+        return paths, leaf_nodes
 
-    def get_birth_death_times(self):
-        paths, nodes = self.get_leaves_path()
-        print(paths)
+    def create_leave_paths(self):
+        leaves = self.tree.get_leaves()
+        paths = {x.name: list() for x in leaves}
+        leaf_nodes = {x: list() for x in leaves}
+        return self.get_leaves_path(leaves, paths, leaf_nodes)
+
+    def get_all_nodes(self):
+        leaf_paths, leaf_nodes = self.create_leave_paths()
+        print(f'leaf nodes paths: {leaf_paths}')
 
         nodes_list = []
-        for node_path in nodes.values():
+        for node_path in leaf_nodes.values():
             nodes_list.append(list(map(lambda x: x, node_path)))
+        return list(set([item for sublist in nodes_list for item in sublist]))
 
-        flat_list = [item for sublist in nodes_list for item in sublist]
-        unique = sorted(list(set(flat_list)), key=lambda x: x.name, reverse=False)
+    def get_interim_nodes(self):
+        all_nodes = self.get_all_nodes()
+        leaves = self.tree.get_leaves()
 
-        bd_times = {x.name: dict() for x in unique}
+        return [node for node in all_nodes if node not in leaves]
 
-        for node in unique:
-            dict_row = bd_times.get(node.name)
-            dict_row['birth'] = 0.0 if node.is_root() else node.up.dist
-            dict_row['death'] = dict_row['birth'] + node.dist
+    def get_all_nodes_path(self):
+        leaf_paths, leaf_nodes = self.create_leave_paths()
+        interim_nodes = self.get_interim_nodes()
 
-        df = pd.DataFrame(bd_times).transpose()
-        df['is_alive'] = np.where(df.index.str.contains('x') == False, True, False)
-        return df
+        for node in interim_nodes:
+            leaf_nodes[node] = list()
+            leaf_paths[node.name] = list()
+
+        return self.get_leaves_path(interim_nodes, leaf_paths, leaf_nodes)
+
+
+
+
+
+    # def get_birth_death_times(self):
+    #     paths, nodes = self.get_leaves_path()
+    #     print(paths)
+    #
+    #     nodes_list = []
+    #     for node_path in nodes.values():
+    #         nodes_list.append(list(map(lambda x: x, node_path)))
+    #
+    #     flat_list = [item for sublist in nodes_list for item in sublist]
+    #     unique = sorted(list(set(flat_list)), key=lambda x: x.name, reverse=False)
+    #
+    #     bd_times = {x.name: dict() for x in unique}
+    #
+    #     for node in unique:
+    #         dict_row = bd_times.get(node.name)
+    #         dict_row['birth'] = 0.0 if node.is_root() else node.up.dist
+    #         dict_row['death'] = dict_row['birth'] + node.dist
+    #
+    #     df = pd.DataFrame(bd_times).transpose()
+    #     df['is_alive'] = np.where(df.index.str.contains('x') == False, True, False)
+    #     return df
