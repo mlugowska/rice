@@ -133,29 +133,3 @@ class BDTree:
             leaf_paths[node.name] = list()
 
         return self.get_leaves_path(interim_nodes, leaf_paths, leaf_nodes)
-
-
-
-
-
-    # def get_birth_death_times(self):
-    #     paths, nodes = self.get_leaves_path()
-    #     print(paths)
-    #
-    #     nodes_list = []
-    #     for node_path in nodes.values():
-    #         nodes_list.append(list(map(lambda x: x, node_path)))
-    #
-    #     flat_list = [item for sublist in nodes_list for item in sublist]
-    #     unique = sorted(list(set(flat_list)), key=lambda x: x.name, reverse=False)
-    #
-    #     bd_times = {x.name: dict() for x in unique}
-    #
-    #     for node in unique:
-    #         dict_row = bd_times.get(node.name)
-    #         dict_row['birth'] = 0.0 if node.is_root() else node.up.dist
-    #         dict_row['death'] = dict_row['birth'] + node.dist
-    #
-    #     df = pd.DataFrame(bd_times).transpose()
-    #     df['is_alive'] = np.where(df.index.str.contains('x') == False, True, False)
-    #     return df

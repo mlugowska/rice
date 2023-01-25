@@ -29,3 +29,8 @@ class Cells:
     def add_mutations(self):
         for key in self.about.keys():
             self.about[key].update({'mutations': list()})
+
+    def create_dataframe(self):
+        df = pd.DataFrame(self.about).transpose()
+        df['is_alive'] = np.where(df.index.str.contains('x') is False, True, False)
+        return df
