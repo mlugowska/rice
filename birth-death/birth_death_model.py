@@ -79,35 +79,6 @@ class BirthDeath:
         return t, event, c_i
         # """
 
-    def run(self, T: float) -> None:
-        """
-        Simulation of continuous-time birth-and-death processes at birth and death event times
-
-        :param T: float, simulation time. All events up to and including this time are
-        included in the output.
-        """
-
-        while True:
-            if self.N == 0:  # population is extinct
-                break
-
-            t_i, event, c_i = self.next_event()  # draw next even
-            self.t += t_i  # update current time
-
-            if self.t > T:  # next event occurs after simulation time
-                break
-
-            if event == 0:  # birth happens
-                self.N += 1  # increase population size by 1
-            elif event == 1:  # death happens
-                self.N -= 1  # decrease population size by 1
-
-            self.t_history.append(self.t)  # record time of event
-            self.t_events.append(t_i)  # record time point of event (dt(i))
-            self.N_history.append(self.N)  # record population size after event
-            self.c.append(c_i)
-            self.events.append(event)
-
     def count_N_in_timestep(self, df: pd.DataFrame, k_i: int, m_dt: np.ndarray) -> pd.DataFrame:
         """
 

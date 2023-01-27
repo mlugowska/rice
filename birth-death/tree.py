@@ -2,6 +2,7 @@
 http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#trees
 https://github.com/tresoldi/ngesh/blob/866b90003019a34eb297a543e22d2aea8ddffc31/src/ngesh/random_tree.py#L26
 """
+import random
 from typing import List
 
 import numpy as np
@@ -10,8 +11,8 @@ from ete3 import Tree, TreeNode
 
 class BDTree:
     def __init__(self, bd, T):
-        self.tree = self.create_tree(bd, T)
         self.bd = bd
+        self.tree = self._create_tree(T)
 
     @staticmethod
     def extant(tree: Tree) -> List[TreeNode]:
@@ -28,41 +29,47 @@ class BDTree:
         sorted_names = sorted(leaf_names, key=len)
         return [tree.get_leaves_by_name(name)[0] for name in sorted_names]
 
-    def _create_tree(self, T: float, t_history: List[float], N_history: List[float], events: List[int],
-                     event_times: List[float], cells: List[int]):
-
-        # add last timestep til end of simulation run
-        # (no event happend in this time, but we need to extend node length because
-        # cell where still alive in this time til next event will happen after simulation time)
-        event_times.append(T - t_history[-1])
+    def _create_tree(self, T: float):
+        # random.seed(1)
 
         mu_i = 0  # mutations counter
 
-        # Create the tree root as a node. Given that the root is at first set as
-        # non-extinct and with a branch length of 0.0, it will be immediately
-        # subject to either a speciation or extinction event.
         tree = Tree()
-        tree.dist = event_times[0]
+
+        tree.dist = 0.0
         tree.add_feature('extinct', False)
         tree.add_feature('mutations', list())
         tree.name = f'{0}'
 
-        for idx in range(len(events)):
-
-            if N_history[idx] == 0:
+        while True:
+            print(f'Current simulation time: {self.bd.t}')
+            if self.bd.N == 0:  # population is extinct
                 break
 
-            # Get node based on cell index
-            node = self.sort_nodes(tree)[cells[idx] - 1]
+            t_i, event, c_i = self.bd.next_event()  # draw next even
+            self.bd.t += t_i  # update current time
 
-            if events[idx] == 0:
-                # The event will be a birth with two children.
+            if self.bd.t > T:
+                leaf_nodes = self.extant(tree)
+                for leaf in leaf_nodes:
+                    leaf.dist += (T - self.bd.t_history[-1])
+                break
+
+            leaf_nodes = self.extant(tree)
+
+            for leaf in leaf_nodes:
+                leaf.dist += t_i
+
+            node = self.sort_nodes(tree)[c_i - 1]
+
+            if event == 0:
+                self.bd.N += 1
+
                 for _ in range(2):
                     child_node = Tree()
+                    child_node.dist = 0.0
                     child_node.add_feature('extinct', False)
                     child_node.add_feature('mutations', list())
-                    child_node.dist = 0
-                    child_node.extinct = False
                     child_node.name = f'{node.name}{_}'
 
                     if node.mutations:
@@ -71,28 +78,29 @@ class BDTree:
 
                     node.add_child(child_node)
 
-            elif events[idx] == 1:
+            elif event == 1:
+                self.bd.N -= 1
                 node.name += ' x'
                 node.extinct = True
-
-            elif events[idx] == 2:
+            else:
                 mu_i += 1
-                print(f'Current simulation time: {t_history[idx]}')
                 print(f'cell: {node.name}, mutation: {mu_i}')
                 node.mutations.append(mu_i)
 
-            leaf_nodes = self.extant(tree)
+            self.bd.t_history.append(self.bd.t)  # record time of event
+            self.bd.t_events.append(t_i)  # record time point of event (dt(i))
+            self.bd.N_history.append(self.bd.N)  # record population size after event
+            self.bd.c.append(c_i)
+            self.bd.events.append(event)
 
-            # Extend the branch length of all extant leaves by the event_time
-            for leaf in leaf_nodes:
-                new_leaf_dist = leaf.dist + event_times[idx + 1]
-                leaf.dist = min(new_leaf_dist, (T or new_leaf_dist))
+
+
+            # for leaf in leaf_nodes:
+            #     new_leaf_dist = leaf.dist + t_i
+            #     leaf.dist = min(new_leaf_dist, (T or new_leaf_dist))
+
 
         return tree
-
-    def create_tree(self, bd, T: float):
-        return self._create_tree(T, t_history=bd.t_history, N_history=bd.N_history, cells=bd.c,
-                                    events=bd.events, event_times=bd.t_events)
 
     def write_tree(self, bd, k_i):
         self.tree.write(features=['name', 'dist'], format_root_node=True,

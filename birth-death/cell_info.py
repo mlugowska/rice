@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -12,9 +13,13 @@ class Cells:
         for key, value in paths.items():
             self.about[key].update({'path': value})
 
-    @staticmethod
-    def get_cell_birth_time(node):
-        return 0.0 if node.is_root() else node.up.dist
+    def get_cell_birth_time(self, node):
+        if node.is_root():
+            return 0.0
+        paths, nodes = self.tree.get_all_nodes_path()
+
+        node_path = nodes.get(node)[1:]
+        return sum(ancestor.dist for ancestor in node_path)
 
     @staticmethod
     def get_cell_death_time(node, birth_time):
@@ -28,7 +33,6 @@ class Cells:
             self.about[node.name].update({'birth_time': birth_time})
             self.about[node.name].update({'death_time': self.get_cell_death_time(node, birth_time)})
 
-    # TODO: add mutations to each cell
     def add_mutations(self):
         nodes = self.tree.get_all_nodes()
 
@@ -42,4 +46,6 @@ class Cells:
 
     def create_dataframe(self):
         df = pd.DataFrame(self.about).transpose()
+        df['birth_time'] = df['birth_time'].astype(np.float64)
+        df['death_time'] = df['death_time'].astype(np.float64)
         return self.check_cell_is_alive(df)
