@@ -4,16 +4,18 @@ import pandas as pd
 
 
 class BirthDeath:
-    def __init__(self, b: float, d: float, N0: int) -> None:
+    def __init__(self, b: float, d: float, N0: int, mu: float = None) -> None:
         """
         initialize the population
 
         :param b: float, birth rate per individual
         :param d: float, death rate per individual
+        :param mu: float, mutation rate per individual
         :param N0: int, initial population size
         """
         self.b = b
         self.d = d
+        self.mu = mu
         self.N = N0  # current population size / number of individuals / number of cells
         self.t = 0.  # time since beginning of simulation
         self.N_history = [N0]  # list to record history of number of individuals
@@ -37,8 +39,6 @@ class BirthDeath:
         t: float, waiting time before next event (birth or death)
         event: int, 0 means birth and 1 means death
         """
-        b_rate = self.N * self.b  # total birth rate
-        d_rate = self.N * self.d  # total death rate
 
         """
         Method 1. to determine next event type
@@ -58,18 +58,24 @@ class BirthDeath:
         """
         # """
         # Method 2. to determine next event type
+        b_rate = self.N * self.b  # total birth rate
+        d_rate = self.N * self.d  # total death rate
 
-        rate = b_rate + d_rate  # parameter (birth + death)
+        if self.mu:
+            mu_rate = self.N * self.mu  # total mutation rate
+            rate = b_rate + d_rate + mu_rate  # parameter N(b + d + mu)
+        else:
+            rate = b_rate + d_rate
 
-        t = np.random.exponential(scale=1 / rate)  # t ~ exp(birth + death)
+        t = np.random.exponential(scale=1/rate)  # t ~ exp(N(b + d + mu)) lub t ~ exp(N(b + d))
 
         u = np.random.default_rng().uniform(0, 1)  # random number from uniform dist
         c_i = int(np.ceil(self.N * u))  # cell where the event occures
 
-        if (u * rate) <= b_rate:
-            event = 0
-            return t, event, c_i
-        event = 1
+        if self.mu:
+            event = 2 if u * rate <= mu_rate else 0 if u * rate <= (b_rate + mu_rate) else 1
+        else:
+            event = 0 if u * rate <= b_rate else 1
         return t, event, c_i
         # """
 
@@ -82,7 +88,6 @@ class BirthDeath:
         """
 
         while True:
-            # self.t < T:
             if self.N == 0:  # population is extinct
                 break
 

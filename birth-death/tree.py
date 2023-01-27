@@ -5,13 +5,13 @@ https://github.com/tresoldi/ngesh/blob/866b90003019a34eb297a543e22d2aea8ddffc31/
 from typing import List
 
 import numpy as np
-import pandas as pd
 from ete3 import Tree, TreeNode
 
 
 class BDTree:
     def __init__(self, bd, T):
         self.tree = self.create_tree(bd, T)
+        self.bd = bd
 
     @staticmethod
     def extant(tree: Tree) -> List[TreeNode]:
@@ -29,12 +29,14 @@ class BDTree:
         return [tree.get_leaves_by_name(name)[0] for name in sorted_names]
 
     def _create_tree(self, T: float, t_history: List[float], N_history: List[float], events: List[int],
-                     event_times: List[float], cells: List[int]) -> TreeNode:
+                     event_times: List[float], cells: List[int]):
 
         # add last timestep til end of simulation run
         # (no event happend in this time, but we need to extend node length because
         # cell where still alive in this time til next event will happen after simulation time)
         event_times.append(T - t_history[-1])
+
+        mu_i = 0  # mutations counter
 
         # Create the tree root as a node. Given that the root is at first set as
         # non-extinct and with a branch length of 0.0, it will be immediately
@@ -42,6 +44,7 @@ class BDTree:
         tree = Tree()
         tree.dist = event_times[0]
         tree.add_feature('extinct', False)
+        tree.add_feature('mutations', list())
         tree.name = f'{0}'
 
         for idx in range(len(events)):
@@ -57,14 +60,26 @@ class BDTree:
                 for _ in range(2):
                     child_node = Tree()
                     child_node.add_feature('extinct', False)
+                    child_node.add_feature('mutations', list())
                     child_node.dist = 0
                     child_node.extinct = False
                     child_node.name = f'{node.name}{_}'
+
+                    if node.mutations:
+                        for mutation in node.mutations:
+                            child_node.mutations.append(mutation)
+
                     node.add_child(child_node)
 
             elif events[idx] == 1:
                 node.name += ' x'
                 node.extinct = True
+
+            elif events[idx] == 2:
+                mu_i += 1
+                print(f'Current simulation time: {t_history[idx]}')
+                print(f'cell: {node.name}, mutation: {mu_i}')
+                node.mutations.append(mu_i)
 
             leaf_nodes = self.extant(tree)
 
@@ -77,13 +92,14 @@ class BDTree:
 
     def create_tree(self, bd, T: float):
         return self._create_tree(T, t_history=bd.t_history, N_history=bd.N_history, cells=bd.c,
-                                 events=bd.events, event_times=bd.t_events)
+                                    events=bd.events, event_times=bd.t_events)
 
     def write_tree(self, bd, k_i):
         self.tree.write(features=['name', 'dist'], format_root_node=True,
                         outfile=f'/Users/magdalena/PycharmProjects/rice/birth-death/{k_i + 1}-N-{bd.N}.txt')
 
-    def get_leaves_path(self, leaves, paths, leaf_nodes):
+    @staticmethod
+    def get_leaves_path(leaves, paths, leaf_nodes):
         """
         get all the nodes up to the last one
         :return:
@@ -111,7 +127,6 @@ class BDTree:
 
     def get_all_nodes(self):
         leaf_paths, leaf_nodes = self.create_leave_paths()
-        print(f'leaf nodes paths: {leaf_paths}')
 
         nodes_list = []
         for node_path in leaf_nodes.values():
@@ -133,3 +148,7 @@ class BDTree:
             leaf_paths[node.name] = list()
 
         return self.get_leaves_path(interim_nodes, leaf_paths, leaf_nodes)
+
+    def expected_mutations_number(self):
+        nodes = self.get_all_nodes()
+        return np.around(sum([node.dist for node in nodes]) * self.bd.mu)

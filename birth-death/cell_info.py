@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class Cells:
     def __init__(self, bd, tree) -> None:
         self.bd_process = bd
@@ -27,10 +30,16 @@ class Cells:
 
     # TODO: add mutations to each cell
     def add_mutations(self):
-        for key in self.about.keys():
-            self.about[key].update({'mutations': list()})
+        nodes = self.tree.get_all_nodes()
+
+        for node in nodes:
+            self.about[node.name].update({'mutations': node.mutations})
+
+    def check_cell_is_alive(self, df):
+        leaves = self.tree.extant(self.tree.tree)
+        leaf_names = [leaf.name for leaf in leaves]
+        return df.assign(is_alive=[True if cell_index in leaf_names else False for cell_index in df.index])
 
     def create_dataframe(self):
         df = pd.DataFrame(self.about).transpose()
-        df['is_alive'] = np.where(df.index.str.contains('x') is False, True, False)
-        return df
+        return self.check_cell_is_alive(df)
