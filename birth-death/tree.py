@@ -30,7 +30,7 @@ class BDTree:
         return [tree.get_leaves_by_name(name)[0] for name in sorted_names]
 
     def _create_tree(self, T: float):
-        # random.seed(1)
+        random.seed(1)
 
         mu_i = 0  # mutations counter
 
@@ -38,7 +38,9 @@ class BDTree:
 
         tree.dist = 0.0
         tree.add_feature('extinct', False)
-        tree.add_feature('mutations', list())
+        tree.add_feature('own_mu', list())
+        tree.add_feature('inherited_mu', list())
+        tree.add_feature('time_mu', list())
         tree.name = f'{0}'
 
         while True:
@@ -69,12 +71,19 @@ class BDTree:
                     child_node = Tree()
                     child_node.dist = 0.0
                     child_node.add_feature('extinct', False)
-                    child_node.add_feature('mutations', list())
+                    child_node.add_feature('own_mu', list())
+                    child_node.add_feature('inherited_mu', list())
+                    child_node.add_feature('time_mu', list())
                     child_node.name = f'{node.name}{_}'
 
-                    if node.mutations:
-                        for mutation in node.mutations:
-                            child_node.mutations.append(mutation)
+                    if node.inherited_mu:
+                        for mutation in node.inherited_mu:
+                            child_node.inherited_mu.append(mutation)
+                            # child_node.time_mu.append(t_i)
+
+                    if node.own_mu:
+                        for mutation in node.own_mu:
+                            child_node.inherited_mu.append(mutation)
 
                     node.add_child(child_node)
 
@@ -85,7 +94,8 @@ class BDTree:
             else:
                 mu_i += 1
                 print(f'cell: {node.name}, mutation: {mu_i}')
-                node.mutations.append(mu_i)
+                node.own_mu.append(mu_i)
+                node.time_mu.append(t_i)
 
             self.bd.t_history.append(self.bd.t)  # record time of event
             self.bd.t_events.append(t_i)  # record time point of event (dt(i))
@@ -93,18 +103,14 @@ class BDTree:
             self.bd.c.append(c_i)
             self.bd.events.append(event)
 
-
-
-            # for leaf in leaf_nodes:
-            #     new_leaf_dist = leaf.dist + t_i
-            #     leaf.dist = min(new_leaf_dist, (T or new_leaf_dist))
-
+        if not self.bd.events.count(0):
+            return None
 
         return tree
 
-    def write_tree(self, bd, k_i):
-        self.tree.write(features=['name', 'dist'], format_root_node=True,
-                        outfile=f'/Users/magdalena/PycharmProjects/rice/birth-death/{k_i + 1}-N-{bd.N}.txt')
+    def write_tree(self, bd, k_i, k):
+        self.tree.write(features=['name', 'dist', 'own_mu', 'inherited_mu', 'time_mu'], format_root_node=True, format=1,
+                        outfile=f'/Users/magdalena/PycharmProjects/rice/birth-death/results/{k}x/trees/{k_i}-N-{bd.N}.txt')
 
     @staticmethod
     def get_leaves_path(leaves, paths, leaf_nodes):
@@ -160,3 +166,6 @@ class BDTree:
     def expected_mutations_number(self):
         nodes = self.get_all_nodes()
         return np.around(sum([node.dist for node in nodes]) * self.bd.mu)
+
+    def get_root_node(self):
+        return self.tree.get_tree_root()

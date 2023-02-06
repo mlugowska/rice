@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -13,7 +14,7 @@ class Cells:
         for key, value in paths.items():
             self.about[key].update({'path': value})
 
-    def get_cell_birth_time(self, node):
+    def get_birthtime(self, node):
         if node.is_root():
             return 0.0
         paths, nodes = self.tree.get_all_nodes_path()
@@ -22,22 +23,30 @@ class Cells:
         return sum(ancestor.dist for ancestor in node_path)
 
     @staticmethod
-    def get_cell_death_time(node, birth_time):
-        return birth_time + node.dist
+    def get_deathtime(node, birthtime, T):
+        time = birthtime + node.dist
+        return time if time < T else 0.0
 
-    def add_cells_birth_death_time(self):
+    @staticmethod
+    def get_lifetime(birthtime, deathtime):
+        return deathtime - birthtime if deathtime else 0.0
+
+    def add_lifetimes(self, T):
         nodes = self.tree.get_all_nodes()
 
         for node in nodes:
-            birth_time = self.get_cell_birth_time(node)
-            self.about[node.name].update({'birth_time': birth_time})
-            self.about[node.name].update({'death_time': self.get_cell_death_time(node, birth_time)})
+            birthtime = self.get_birthtime(node)
+            deathtime = self.get_deathtime(node, birthtime, T)
+            self.about[node.name].update({'birthtime': birthtime})
+            self.about[node.name].update({'deathtime': deathtime})
+            self.about[node.name].update({'lifetime': self.get_lifetime(birthtime, deathtime)})
 
     def add_mutations(self):
         nodes = self.tree.get_all_nodes()
 
         for node in nodes:
-            self.about[node.name].update({'mutations': node.mutations})
+            self.about[node.name].update({'own_mu': node.own_mu})
+            self.about[node.name].update({'inherited_mu': node.inherited_mu})
 
     def check_cell_is_alive(self, df):
         leaves = self.tree.extant(self.tree.tree)
@@ -46,6 +55,30 @@ class Cells:
 
     def create_dataframe(self):
         df = pd.DataFrame(self.about).transpose()
-        df['birth_time'] = df['birth_time'].astype(np.float64)
-        df['death_time'] = df['death_time'].astype(np.float64)
         return self.check_cell_is_alive(df)
+
+    def calculate_mutation_frequency(self):
+        leaves = self.tree.extant(self.tree.tree)
+        mu_index = list()
+
+        for leaf in leaves:
+            for inherited_mu in leaf.inherited_mu:
+                mu_index.append(inherited_mu)
+            for own_mu in leaf.own_mu:
+                mu_index.append(own_mu)
+        mu_index = list(set(mu_index))
+
+        if self.tree.get_root_node().own_mu:
+            mu_index = list(set(mu_index).difference(self.tree.get_root_node().own_mu))
+
+        df = pd.DataFrame(columns=['Number of cells'], index=mu_index).fillna(0)
+
+        for mu in mu_index:
+            for leaf in leaves:
+                if mu in leaf.inherited_mu or mu in leaf.own_mu:
+                    df.at[mu, 'Number of cells'] += 1
+        return df
+
+    @staticmethod
+    def sfs(df):
+        return df['Number of cells'].value_counts().sort_index()

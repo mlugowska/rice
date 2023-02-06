@@ -67,7 +67,7 @@ class BirthDeath:
         else:
             rate = b_rate + d_rate
 
-        t = np.random.exponential(scale=1/rate)  # t ~ exp(N(b + d + mu)) lub t ~ exp(N(b + d))
+        t = np.random.exponential(scale=1 / rate)  # t ~ exp(N(b + d + mu)) lub t ~ exp(N(b + d))
 
         u = np.random.default_rng().uniform(0, 1)  # random number from uniform dist
         c_i = int(np.ceil(self.N * u))  # cell where the event occures
@@ -93,6 +93,9 @@ class BirthDeath:
                 if index < len(self.t_history) - 1:
                     if t_i <= m < self.t_history[index + 1]:
                         df.at[k_i, m] = self.N_history[index]
+                        continue
+            if m > self.t_history[-1]:
+                df.at[k_i, m] = self.N
         return df
 
     def extinct(self):
