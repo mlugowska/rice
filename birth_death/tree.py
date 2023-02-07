@@ -10,9 +10,9 @@ from ete3 import Tree, TreeNode
 
 
 class BDTree:
-    def __init__(self, bd, T):
+    def __init__(self, T=0, bd=None):
         self.bd = bd
-        self.tree = self._create_tree(T)
+        self.tree = self._create_tree(T) if bd else None
 
     @staticmethod
     def extant(tree: Tree) -> List[TreeNode]:
@@ -109,7 +109,7 @@ class BDTree:
         return tree
 
     def write_tree(self, bd, k_i, k):
-        self.tree.write(features=['name', 'dist', 'own_mu', 'inherited_mu', 'time_mu'], format_root_node=True, format=1,
+        self.tree.write(features=['name', 'own_mu'], format_root_node=True, format=1,
                         outfile=f'/Users/magdalena/PycharmProjects/rice/birth-death/results/{k}x/trees/{k_i}-N-{bd.N}.txt')
 
     @staticmethod

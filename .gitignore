@@ -241,5 +241,5 @@ dmypy.json
 cython_debug/
 
 # project
-birth-death/results
+birth_death/results
 

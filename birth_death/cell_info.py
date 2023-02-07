@@ -57,16 +57,20 @@ class Cells:
         df = pd.DataFrame(self.about).transpose()
         return self.check_cell_is_alive(df)
 
-    def calculate_mutation_frequency(self):
-        leaves = self.tree.extant(self.tree.tree)
+    @staticmethod
+    def get_mutations_number(leaves):
         mu_index = list()
-
         for leaf in leaves:
             for inherited_mu in leaf.inherited_mu:
                 mu_index.append(inherited_mu)
             for own_mu in leaf.own_mu:
                 mu_index.append(own_mu)
-        mu_index = list(set(mu_index))
+
+        return list(set(mu_index))
+
+    def calculate_mutation_frequency(self):
+        leaves = self.tree.extant(self.tree.tree)
+        mu_index = self.get_mutations_number(leaves)
 
         if self.tree.get_root_node().own_mu:
             mu_index = list(set(mu_index).difference(self.tree.get_root_node().own_mu))
