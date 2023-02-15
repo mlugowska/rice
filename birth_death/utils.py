@@ -6,10 +6,10 @@ from numpy import log
 from tree import BDTree
 
 
-def generate_tree(bd, T, k_i, k):
-    tree = BDTree(bd, T)
-    if tree.tree:
-        tree.write_tree(bd, k_i, k)
+def generate_tree(bd, T, k_i, k, Ki):
+    tree = BDTree(bd=bd, T=T, Ki=Ki)
+    # if tree.tree:
+    #     tree.write_tree(bd=bd, k_i=k_i, k=k)
     return tree
 
 

@@ -8,11 +8,14 @@ from typing import List
 import numpy as np
 from ete3 import Tree, TreeNode
 
+from birth_death.birth_death_model import BirthDeath
+from birth_death.clone import Clone
+
 
 class BDTree:
-    def __init__(self, T=0, bd=None):
+    def __init__(self, T=0, bd=None, Ki=0):
         self.bd = bd
-        self.tree = self._create_tree(T) if bd else None
+        self.tree = self._create_tree(T, Ki) if bd else None
 
     @staticmethod
     def extant(tree: Tree) -> List[TreeNode]:
@@ -29,7 +32,7 @@ class BDTree:
         sorted_names = sorted(leaf_names, key=len)
         return [tree.get_leaves_by_name(name)[0] for name in sorted_names]
 
-    def _create_tree(self, T: float):
+    def _create_tree(self, T: float, Ki: int):
         random.seed(1)
 
         mu_i = 0  # mutations counter
@@ -42,7 +45,18 @@ class BDTree:
         tree.add_feature('inherited_mu', list())
         tree.add_feature('time_mu', list())
         tree.name = f'{0}'
+        # clone = Clone(tree, 0)
 
+        tree.add_feature('clone', 0)
+
+        self.create_tree(tree, T, mu_i, Ki)
+
+        if not self.bd.events.count(0):
+            return None
+
+        return tree
+
+    def create_tree(self, tree, T, mu_i, Ki, bd=None):
         while True:
             print(f'Current simulation time: {self.bd.t}')
             if self.bd.N == 0:  # population is extinct
@@ -58,6 +72,11 @@ class BDTree:
                 break
 
             leaf_nodes = self.extant(tree)
+            # if len(leaf_nodes[0].own_mu + leaf_nodes[0].inherited_mu) == Ki:
+            #     clone = Clone(leaf_nodes[0], 1)
+            #     bd = BirthDeath(b=self.bd.b + 1, d=self.bd.d, mu=self.bd.mu, N0=1)
+            #     leaf_nodes.remove(leaf_nodes[0])
+            #     self.create_tree(leaf_nodes[0], T, mu_i, Ki)
 
             for leaf in leaf_nodes:
                 leaf.dist += t_i
@@ -74,6 +93,7 @@ class BDTree:
                     child_node.add_feature('own_mu', list())
                     child_node.add_feature('inherited_mu', list())
                     child_node.add_feature('time_mu', list())
+                    child_node.add_feature('clone', 0)
                     child_node.name = f'{node.name}{_}'
 
                     if node.inherited_mu:
@@ -103,13 +123,8 @@ class BDTree:
             self.bd.c.append(c_i)
             self.bd.events.append(event)
 
-        if not self.bd.events.count(0):
-            return None
-
-        return tree
-
     def write_tree(self, bd, k_i, k):
-        self.tree.write(features=['name', 'own_mu'], format_root_node=True, format=1,
+        self.tree.write(features=['name', 'dist', 'own_mu', 'inherited_mu'], format_root_node=True, format=1,
                         outfile=f'/Users/magdalena/PycharmProjects/rice/birth-death/results/{k}x/trees/{k_i}-N-{bd.N}.txt')
 
     @staticmethod
