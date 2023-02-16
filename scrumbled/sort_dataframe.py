@@ -3,8 +3,9 @@ def slice_dataframe(df, column_name, value):
 
 
 # get next column that is not equal to previous
-def get_next_column_name_to_sort_1(df, first_column_name, sorted_columns, rejected, skipped):
-    df = slice_dataframe(df, first_column_name, 1)
+def get_next_column_name_to_sort_1(df, first_column_name, sorted_columns, rejected, skipped, pdb=None):
+    if not pdb:
+        df = slice_dataframe(df, first_column_name, 1)
     for (index, colname) in enumerate(df):
         if colname in rejected:
             continue

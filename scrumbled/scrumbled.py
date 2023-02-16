@@ -1,27 +1,45 @@
 import sys
-
 sys.path.append('/Users/magdalena/PycharmProjects/rice/scrumbled')
+
+from excel_writer import write_to_excel
 
 import numpy as np
 import pandas as pd
-from ete3 import Tree
 
-from create_mutation_dafaframe import create_dataframe_from_tree
-from sort_dataframe import sort_rows_by_random_number, get_next_column_name_to_sort_1, \
-    slice_interim_dataframe_with_0
-from styler import styler
+from sort_dataframe import sort_rows_by_random_number, get_next_column_name_to_sort_1
 
 # ==================== dataframe from tree ==============================================
 # ==================== create dataframe with mutations ==================================
-tree = Tree('/Users/magdalena/PycharmProjects/rice/scrumbled/sample_tree.txt', format=0)
-df = create_dataframe_from_tree(tree)
+# tree = Tree('/Users/magdalena/PycharmProjects/rice/scrumbled/sample_tree.txt', format=0)
+# df = create_dataframe_from_tree(tree)
 
 # ==================== OR ================================================================
 
 # ==================== read dataframe from file ==========================================
 # df = pd.read_excel('/Users/magdalena/PycharmProjects/rice/scrumbled/tree_2.xlsx', engine='openpyxl', index_col=0)
-# df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/HCC9-T.xlsx', engine='openpyxl', index_col=0)
-# df = df.apply(lambda row: row.fillna(row.value_counts().index[0]), axis=1)
+# df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/HCC8-PVTT.xlsx', engine='openpyxl', index_col=0)
+df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/Ivan Drivers LC18 120222 - to sort.xlsx', engine='openpyxl', index_col=0)
+df = df.transpose()
+df = df.replace([3], np.nan)
+df = df.apply(lambda row: row.fillna(row.value_counts().index[0]), axis=1)
+
+# ==================== permutation of row values in each column ==========================
+
+
+def shuffle(df):
+    rows = df.index
+    columns = df.columns
+    df_perm = pd.DataFrame(columns=columns, index=rows)
+
+    for col in columns:
+        sampler = np.random.permutation(df.shape[0])
+        new_vals = df[col].take(sampler).values
+        df_perm[col] = new_vals
+    return df_perm
+
+
+# df = shuffle(df)
+
 
 # ==================== generate random number for each row/cell ==========================
 np.random.seed(10)
@@ -46,79 +64,60 @@ df_sorted = df_sorted_by_freq[df_sorted_by_freq.index != 'freq'].sort_values(by=
 
 sorted_columns = [first_column_name]
 
-# df_4 = styler(df_4, first_column_name, '#dbf0de', name='styled')
-
 # ==================== SORT 4 next columns ===============================================
-# i = 0
-# colors = ['#eaf2ed', '#abcbb8', '#bbd4c6', '#caded3', '#dae8e0']
 rejected = []
 skipped = []
 while True:
     try:
         next_column_name, rejected, skipped = get_next_column_name_to_sort_1(
-            df=df_sorted, first_column_name=first_column_name, sorted_columns=sorted_columns, rejected=rejected, skipped=skipped)
+            df=df_sorted, first_column_name=first_column_name, sorted_columns=sorted_columns, rejected=rejected,
+            skipped=skipped)
 
-        df_sorted_next = df_sorted[df_sorted.index != 'freq'].sort_values(by=sorted_columns, kind='mergesort')
+        df_sorted_next = df_sorted[df_sorted.index != 'freq'].sort_values(by=sorted_columns, kind='mergesort',
+                                                                          ascending=True)
         df_sorted = df_sorted_next
         first_column_name = next_column_name
-
-        # df_styled = styler(df_sorted_next, first_column_name, colors[i], name=f'{next_column_name}')
-        # i += 1
     except TypeError:
         print(f'first mutation line: {sorted_columns + skipped}')
-        # df_sorted_next.loc['freq'] = df_sorted_by_freq.loc[:, df_sorted_by_freq.columns != 'random'].mean(axis=0)
-        # df_sorted_next = df_sorted_next.fillna(0)
-        # df_sorted_next.to_excel('final.xlsx')
         break
 
-# df_sorted.to_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/HCC9-T-sorted-once.xlsx')
-df_sorted.to_excel('/Users/magdalena/PycharmProjects/rice/scrumbled/tree_2_sorted.xlsx')
-# ========= SORT inside sorted ================
+# ========= SORT upper rows ================
+first_column_name = df_sorted.columns[0]
+sorted_columns_upper = [first_column_name]
+df_sorted_upper = df_sorted.loc[df_sorted[first_column_name] == 0]
 
-for index, column in enumerate(sorted_columns):
-    print(f'-------- start {column}')
-    first_column_name = column
-    mutation_line = [first_column_name]
-
+rejected_upper = []
+skipped_upper = []
+while True:
     try:
-        next_main_column = sorted_columns[index + 1]
-    except IndexError:
-        next_main_column = column
+        next_column_name, rejected_upper, skipped_upper = get_next_column_name_to_sort_1(
+            df=df_sorted_upper, first_column_name=first_column_name, sorted_columns=sorted_columns_upper,
+            rejected=rejected_upper, skipped=skipped_upper,
+            pdb=True)
 
-    try:
-        interim_df = slice_interim_dataframe_with_0(df_sorted, first_column_name, next_main_column)
-    except KeyError:
-        print('Dataframe sorted')
+        df_sorted_next = df_sorted_upper[df_sorted_upper.index != 'freq'].sort_values(by=sorted_columns_upper,
+                                                                                      kind='mergesort',
+                                                                                      ascending=True)
+        df_sorted_upper = df_sorted_next
+        first_column_name = next_column_name
 
-    if interim_df is None:
-        continue
+    except TypeError:
+        print(f'first mutation line: {sorted_columns_upper + skipped_upper}')
+        df_sorted = df_sorted_upper.append(df_sorted.loc[df_sorted[df_sorted.columns[0]] == 1])
+        break
 
-    rejected_inter = []
-    skipped_inter = []
-    while True:
-        try:
-            next_column_name, rejected_inter, skipped_inter = get_next_column_name_to_sort_1(
-                df=interim_df, first_column_name=first_column_name, sorted_columns=mutation_line, rejected=rejected_inter, skipped=skipped_inter)
+df_sorted.loc['freq'] = df_sorted_by_freq.loc['freq']
 
-            interim_df_next = interim_df[interim_df.index != 'freq'].sort_values(by=mutation_line[-1], kind='mergesort')
-            interim_df = interim_df_next
-            first_column_name = next_column_name
-        except TypeError:
-            print(f'mutation line: {list(set(mutation_line + skipped_inter))}')
+#
+# def highlight_cells(val):
+#     color = '#8b0000' if val == 1 else 'white'
+#     return f'background-color: {color}'
+#
+#
+# df_styled = df_sorted.style.applymap(highlight_cells)
 
-            index = df_sorted.loc[df_sorted.index.isin(interim_df.index)].index
-            start = df_sorted.loc[df_sorted.index.isin(interim_df.index)].index[0]
-            start_id = df_sorted.index.get_loc(start)
-            before_start = df_sorted.index[start_id-1]
+df_styled = df.style.apply(lambda x: ["background: red" if v == 1 else "" for v in x], axis=1)
 
-            stop = df_sorted.loc[df_sorted.index.isin(interim_df.index)].index[-1]
-            stop_id = df_sorted.index.get_loc(stop)
-            after_stop = df_sorted.index[stop_id+1]
+# df_styled.to_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/Ivan Drivers LC18 120222 - sorted.xlsx')
 
-            df = df_sorted.drop(index=index)
-            df_sorted = df.loc[:before_start].append(interim_df).append(df.loc[after_stop:])
-            print(f'-------- end {column}')
-            break
-
-
-df_sorted.to_excel('df_2.xlsx')
+write_to_excel(df_sorted, '/Users/magdalena/Documents/PhD/RU/sortowanie/Ivan Drivers LC18 120222 - sorted orig.xlsx')
