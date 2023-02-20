@@ -17,6 +17,6 @@ def write_to_excel(df, path):
     # Add a format. Light red fill with dark red text.
     format = workbook.add_format({'bg_color': '#8b0000'})
 
-    worksheet.conditional_format(0, 0, max_row, max_col, {'type': 'cell', 'criteria': '==', 'value': '1', 'format': format})
+    worksheet.conditional_format(1, 0, max_row, max_col, {'type': 'cell', 'criteria': '==', 'value': '1', 'format': format})
 
     writer.close()

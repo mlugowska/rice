@@ -16,11 +16,12 @@ from sort_dataframe import sort_rows_by_random_number, get_next_column_name_to_s
 # ==================== OR ================================================================
 
 # ==================== read dataframe from file ==========================================
-# df = pd.read_excel('/Users/magdalena/PycharmProjects/rice/scrumbled/tree_2.xlsx', engine='openpyxl', index_col=0)
-# df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/HCC8-PVTT.xlsx', engine='openpyxl', index_col=0)
-df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/Ivan Drivers LC18 120222 - to sort.xlsx', engine='openpyxl', index_col=0)
-df = df.transpose()
-df = df.replace([3], np.nan)
+df = pd.read_excel('/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-151-mu-occur.xlsx', engine='openpyxl', index_col=0)
+# df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/HCC9-T.xlsx', engine='openpyxl', index_col=0)
+# df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/łamigłówka/SCRAMBLED 2.xlsx', engine='openpyxl', index_col=0)
+# df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/Ivan Drivers LC18 120222 - to sort.xlsx', engine='openpyxl', index_col=0)
+# df = df.transpose()
+# df = df.replace([3], np.nan)
 df = df.apply(lambda row: row.fillna(row.value_counts().index[0]), axis=1)
 
 # ==================== permutation of row values in each column ==========================
@@ -108,16 +109,4 @@ while True:
 
 df_sorted.loc['freq'] = df_sorted_by_freq.loc['freq']
 
-#
-# def highlight_cells(val):
-#     color = '#8b0000' if val == 1 else 'white'
-#     return f'background-color: {color}'
-#
-#
-# df_styled = df_sorted.style.applymap(highlight_cells)
-
-df_styled = df.style.apply(lambda x: ["background: red" if v == 1 else "" for v in x], axis=1)
-
-# df_styled.to_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/Ivan Drivers LC18 120222 - sorted.xlsx')
-
-write_to_excel(df_sorted, '/Users/magdalena/Documents/PhD/RU/sortowanie/Ivan Drivers LC18 120222 - sorted orig.xlsx')
+write_to_excel(df_sorted, '/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-151-mu-occur sorted orig.xlsx')

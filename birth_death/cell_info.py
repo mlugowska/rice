@@ -1,11 +1,8 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 
 class Cells:
-    def __init__(self, bd, tree) -> None:
-        self.bd_process = bd
+    def __init__(self, tree) -> None:
         self.tree = tree
         self.about = {x.name: {} for x in self.tree.get_all_nodes()}
 
@@ -57,8 +54,7 @@ class Cells:
         df = pd.DataFrame(self.about).transpose()
         return self.check_cell_is_alive(df)
 
-    @staticmethod
-    def get_mutations_number(leaves):
+    def get_mutations_number(self, leaves):
         mu_index = list()
         for leaf in leaves:
             for inherited_mu in leaf.inherited_mu:
@@ -66,14 +62,14 @@ class Cells:
             for own_mu in leaf.own_mu:
                 mu_index.append(own_mu)
 
+        # if self.tree.get_root_node().own_mu:
+        #     return list(set(mu_index).difference(self.tree.get_root_node().own_mu))
+
         return list(set(mu_index))
 
     def calculate_mutation_frequency(self):
         leaves = self.tree.extant(self.tree.tree)
         mu_index = self.get_mutations_number(leaves)
-
-        if self.tree.get_root_node().own_mu:
-            mu_index = list(set(mu_index).difference(self.tree.get_root_node().own_mu))
 
         df = pd.DataFrame(columns=['Number of cells'], index=mu_index).fillna(0)
 
@@ -86,3 +82,17 @@ class Cells:
     @staticmethod
     def sfs(df):
         return df['Number of cells'].value_counts().sort_index()
+
+    def create_mutation_table(self):
+        leaves = self.tree.extant(self.tree.tree)
+        mu_index = self.get_mutations_number(leaves)
+
+        df = pd.DataFrame(columns=mu_index, index=[leaf.name for leaf in leaves]).fillna(0)
+
+        for index, row in df.iterrows():
+            leaf = self.tree.tree.get_leaves_by_name(index)[0]
+            for colname in df.columns:
+                if colname in leaf.own_mu or colname in leaf.inherited_mu:
+                    df.at[index, colname] = 1
+
+        return df

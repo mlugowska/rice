@@ -1,15 +1,15 @@
 import numpy as np
 import pandas as pd
-from ete3 import TreeStyle, Tree, NodeStyle, TextFace, AttrFace
+from ete3 import TreeStyle, Tree, NodeStyle, TextFace
 from numpy import log
 
 from tree import BDTree
 
 
-def generate_tree(bd, T, k_i, k, Ki):
-    tree = BDTree(bd=bd, T=T, Ki=Ki)
-    # if tree.tree:
-    #     tree.write_tree(bd=bd, k_i=k_i, k=k)
+def generate_tree(bd, T, k_i, k):
+    tree = BDTree(bd=bd, T=T)
+    if tree.tree:
+        tree.write_tree(k_i=k_i, k=k)
     return tree
 
 
