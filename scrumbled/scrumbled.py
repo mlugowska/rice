@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('/Users/magdalena/PycharmProjects/rice/scrumbled')
 
 from excel_writer import write_to_excel
@@ -16,13 +17,15 @@ from sort_dataframe import sort_rows_by_random_number, get_next_column_name_to_s
 # ==================== OR ================================================================
 
 # ==================== read dataframe from file ==========================================
-df = pd.read_excel('/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-151-mu-occur.xlsx', engine='openpyxl', index_col=0)
+df = pd.read_excel('/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-151-mu-occur.xlsx',
+                   engine='openpyxl', index_col=0)
 # df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/HCC9-T.xlsx', engine='openpyxl', index_col=0)
 # df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/łamigłówka/SCRAMBLED 2.xlsx', engine='openpyxl', index_col=0)
 # df = pd.read_excel('/Users/magdalena/Documents/PhD/RU/sortowanie/Ivan Drivers LC18 120222 - to sort.xlsx', engine='openpyxl', index_col=0)
 # df = df.transpose()
 # df = df.replace([3], np.nan)
 df = df.apply(lambda row: row.fillna(row.value_counts().index[0]), axis=1)
+
 
 # ==================== permutation of row values in each column ==========================
 
@@ -109,4 +112,5 @@ while True:
 
 df_sorted.loc['freq'] = df_sorted_by_freq.loc['freq']
 
-write_to_excel(df_sorted, '/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-151-mu-occur sorted orig.xlsx')
+write_to_excel(df_sorted,
+               '/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-151-mu-occur sorted orig.xlsx')

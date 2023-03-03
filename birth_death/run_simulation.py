@@ -15,12 +15,12 @@ from cell_info import Cells
 set up input parameters
 """
 
-b = 2.
-d = 1.
-mu = 2.
+b = .162
+d = .1
+mu = .5
 N0 = 1
 
-T = 6  # total time for running each simulation
+T = 10  # total time for running each simulation
 k = 1  # number of simulations to repeat
 bd_list = []  # list to save all simulations
 tree_list = []
@@ -36,25 +36,23 @@ simulation of continuous-time birth-and-death processes at birth and death event
 """
 k_i = 1
 
-# for k_i in range(k):
-while True:
+for k_i in range(k):
     print(f'============= Create tree for k: {k_i} =============')
     bd = BirthDeath(b=b, d=d, N0=N0, mu=mu)  # create a simulation
     tree = generate_tree(bd=bd, T=T, k_i=k_i, k=k)
     print(f'current population size = {bd.N}')
-    if bd.N >= 300:
-        bd_list.append(bd)
-        tree_list.append(tree)
 
-        # print(f'current population size = {bd.N}')
+    bd_list.append(bd)
+    tree_list.append(tree)
 
-        # create df with N(m_dt): population size at each time point
-        # (time points same for all simulations to calculate average N)
-        if len(bd_list) == 1:
-            df_N = pd.DataFrame(columns=m_dt, index=range(1, k + 1))
-            df_N = df_N.fillna(0)
-        df_N = bd.count_N_in_timestep(df_N, k_i + 1, m_dt)
-        break
+    # print(f'current population size = {bd.N}')
+
+    # create df with N(m_dt): population size at each time point
+    # (time points same for all simulations to calculate average N)
+    if len(bd_list) == 1:
+        df_N = pd.DataFrame(columns=m_dt, index=range(1, k + 1))
+        df_N = df_N.fillna(0)
+    df_N = bd.count_N_in_timestep(df_N, k_i + 1, m_dt)
 
 """
 generate cells statistics
@@ -102,15 +100,15 @@ for k_i, bd in enumerate(bd_list):
                 plt.savefig(
                     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-sfs.png')
 
-        df_cells.to_excel(
-            f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-stats.xlsx')
-
-        df_mu_occur.to_excel(
-            f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-occur.xlsx')
-
-        histograms.cells_life_distribution(df_cells, mean_lifetime)
-        plt.savefig(
-            f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-life-distribution.png')
+        # df_cells.to_excel(
+        #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-stats.xlsx')
+        #
+        # df_mu_occur.to_excel(
+        #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-occur.xlsx')
+        #
+        # histograms.cells_life_distribution(df_cells, mean_lifetime)
+        # plt.savefig(
+        #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-life-distribution.png')
 
 # """
 # mean lifetime distribution
