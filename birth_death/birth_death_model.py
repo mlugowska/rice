@@ -28,7 +28,7 @@ class BirthDeath:
     def analytic(self, dt: np.ndarray):
         return self.N * np.exp((self.b - self.d) * dt)
 
-    def next_event(self):
+    def next_event(self, N_i=None, subclone=None):
         """
         generate the expected waiting time and identity of the next event
 
@@ -56,6 +56,7 @@ class BirthDeath:
         return t_d, event
 
         """
+
         # """
         # Method 2. to determine next event type
         b_rate = self.N * self.b  # total birth rate
@@ -70,7 +71,7 @@ class BirthDeath:
         t = np.random.exponential(scale=1 / rate)  # t ~ exp(N(b + d + mu)) lub t ~ exp(N(b + d))
 
         u = np.random.default_rng().uniform(0, 1)  # random number from uniform dist
-        c_i = int(np.ceil(self.N * u))  # cell where the event occures
+        c_i = int(np.ceil(N_i * u)) # cell where the event occures
 
         if self.mu:
             event = 2 if u * rate <= mu_rate else 0 if u * rate <= (b_rate + mu_rate) else 1

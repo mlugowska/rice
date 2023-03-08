@@ -11,16 +11,19 @@ from utils import generate_tree, count_extinct_bd, calculate_mean_birthtime, cal
     calculate_mean_lifetime, mean_sfs, show_tree
 from cell_info import Cells
 
+# import pdb; pdb.set_trace()
+# show_tree('/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/trees/0-N-279.txt')
 """
 set up input parameters
 """
 
 b = .162
 d = .1
-mu = .5
+mu = .2
 N0 = 1
 
-T = 10  # total time for running each simulation
+T = 44  # total time for running each simulation
+s = 38  # time of new clone creation
 k = 1  # number of simulations to repeat
 bd_list = []  # list to save all simulations
 tree_list = []
@@ -39,20 +42,25 @@ k_i = 1
 for k_i in range(k):
     print(f'============= Create tree for k: {k_i} =============')
     bd = BirthDeath(b=b, d=d, N0=N0, mu=mu)  # create a simulation
-    tree = generate_tree(bd=bd, T=T, k_i=k_i, k=k)
-    print(f'current population size = {bd.N}')
-
+    b_0 = b
+    b_1 = 5 * b
+    b_2 = 7 * b
+    # bd_1 = BirthDeath(b=5 * b, d=d, N0=N0, mu=mu)  # create a simulation
+    # bd_2 = BirthDeath(b=10 * b, d=d, N0=N0, mu=mu)  # create a simulation
+    tree = generate_tree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, k_i=k_i, k=k, s=s)
+    # print(f'current population size = {bd.N}')
+    #
     bd_list.append(bd)
     tree_list.append(tree)
-
-    # print(f'current population size = {bd.N}')
-
-    # create df with N(m_dt): population size at each time point
-    # (time points same for all simulations to calculate average N)
-    if len(bd_list) == 1:
-        df_N = pd.DataFrame(columns=m_dt, index=range(1, k + 1))
-        df_N = df_N.fillna(0)
-    df_N = bd.count_N_in_timestep(df_N, k_i + 1, m_dt)
+    #
+    # # print(f'current population size = {bd.N}')
+    #
+    # # create df with N(m_dt): population size at each time point
+    # # (time points same for all simulations to calculate average N)
+    # if len(bd_list) == 1:
+    #     df_N = pd.DataFrame(columns=m_dt, index=range(1, k + 1))
+    #     df_N = df_N.fillna(0)
+    # df_N = bd.count_N_in_timestep(df_N, k_i + 1, m_dt)
 
 """
 generate cells statistics
@@ -61,8 +69,6 @@ for k_i, bd in enumerate(bd_list):
     print(f'============= Generate statistics for k: {k_i} =============')
     tree = tree_list[k_i]
     if tree.tree:
-        # show_tree(tree=tree.tree, k=k, k_i=k_i, N=bd.N)
-
         about_cell = Cells(tree)
         about_cell.add_cells_path()
         about_cell.add_lifetimes(T)
@@ -91,24 +97,24 @@ for k_i, bd in enumerate(bd_list):
                 df_sfs = about_cell.sfs(df_mu_freq)
                 sfs_list.append(df_sfs)
 
-                df_mu_freq.to_excel(
-                    f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-freq.xlsx')
-                df_sfs.to_excel(
-                    f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-sfs.xlsx')
+#                 df_mu_freq.to_excel(
+#                     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-freq.xlsx')
+#                 df_sfs.to_excel(
+#                     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-sfs.xlsx')
 
                 histograms.sfs(df_sfs)
                 plt.savefig(
                     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-sfs.png')
 
-        # df_cells.to_excel(
-        #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-stats.xlsx')
-        #
+        df_cells.to_excel(
+            f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-stats.xlsx')
+
         # df_mu_occur.to_excel(
         #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-occur.xlsx')
         #
-        # histograms.cells_life_distribution(df_cells, mean_lifetime)
-        # plt.savefig(
-        #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-life-distribution.png')
+        histograms.cells_life_distribution(df_cells, mean_lifetime)
+        plt.savefig(
+            f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-life-distribution.png')
 
 # """
 # mean lifetime distribution
@@ -149,3 +155,5 @@ plot histogram of N frequency
 # histograms.N_freq_in_specific_timesteps(df_N)
 # plt.savefig(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/N-distribution.png')
 # # plt.show()
+
+

@@ -6,14 +6,14 @@ from numpy import log
 from tree import BDTree
 
 
-def generate_tree(bd, T, k_i, k):
-    tree = BDTree(bd=bd, T=T)
+def generate_tree(bd, b_0, b_1, b_2, T, k_i, k, s):
+    tree = BDTree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, s=s)
     if tree.tree:
         tree.write_tree(k_i=k_i, k=k)
     return tree
 
 
-def show_tree(tree, k, k_i, N):
+def show_tree(tree, k=None, k_i=None, N=None):
     if isinstance(tree, str):
         tree = Tree(tree)
     ts = TreeStyle()
