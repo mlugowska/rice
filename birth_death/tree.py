@@ -110,7 +110,7 @@ class BDTree:
                 self.create_clone_1 = False
                 self.clone_1_exsists = True
 
-            if self.clone_1_exsists and self.create_clone_2 and self.bd.t >= 1.1 * s and event == 2 and node.clone == 1:
+            if self.clone_1_exsists and self.create_clone_2 and self.bd.t >= 1.5 * s and event == 2 and node.clone == 1:
                 print(f'=========================================================== clone 2 from {node.name} !!!!!!!!')
                 node.clone = min(node.clone + 1, 2)
                 t_clone_2 = self.bd.t - node.dist

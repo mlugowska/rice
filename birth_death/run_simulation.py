@@ -22,8 +22,8 @@ d = .1
 mu = .2
 N0 = 1
 
-T = 44  # total time for running each simulation
-s = 38  # time of new clone creation
+T = 17  # total time for running each simulation
+s = 10  # time of new clone creation
 k = 1  # number of simulations to repeat
 bd_list = []  # list to save all simulations
 tree_list = []
@@ -94,8 +94,25 @@ for k_i, bd in enumerate(bd_list):
 
             if not bd.extinct():
                 df_mu_freq = about_cell.calculate_mutation_frequency()
-                df_sfs = about_cell.sfs(df_mu_freq)
-                sfs_list.append(df_sfs)
+                df_sfs_0, df_sfs_1, df_sfs_2 = about_cell.sfs(df_mu_freq)
+                df_sfs_0['clone'] = 0
+                df_sfs_1['clone'] = 1
+                df_sfs_2['clone'] = 2
+
+                df = pd.concat([df_sfs_0, df_sfs_1, df_sfs_2])
+
+                df_sfs = pd.DataFrame({
+                    "clone 0": df[df['clone'] == 0][0],
+                    "clone 1": df[df['clone'] == 1][0],
+                    "clone 2": df[df['clone'] == 2][0]
+                }, index=df.index)
+                import pdb; pdb.set_trace()
+
+                # df_sfs_0.reset_index(level=[1, 2, 3])
+                # df_sfs_1.reset_index(level=[1, 2, 3])
+                # df_sfs_2.reset_index(level=[1, 2, 3])
+
+                # sfs_list.append(df_sfs)
 
 #                 df_mu_freq.to_excel(
 #                     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-freq.xlsx')

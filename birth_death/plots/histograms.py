@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.patches import Patch
 from utils import calculate_mean_bd
 
 
@@ -80,7 +81,8 @@ def cells_life_distribution(df, mean_lifetime):
 def sfs(df):
     fig, ax = plt.subplots(figsize=(6, 4))
 
-    df.plot.bar(alpha=0.65)
+    colors = ["#264b96", "#27b376", '#bf212f']
+    df.plot(kind='bar', alpha=0.65, color=colors)
 
     for p in ax.patches:
         ax.annotate(f'{p.get_height()}', (p.get_x() + 0.25, p.get_height() + 0.01))

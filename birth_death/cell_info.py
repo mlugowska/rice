@@ -71,17 +71,29 @@ class Cells:
         leaves = self.tree.extant(self.tree.tree)
         mu_index = self.get_mutations_number(leaves)
 
-        df = pd.DataFrame(columns=['Number of cells'], index=mu_index).fillna(0)
+        df = pd.DataFrame(columns=['Number of cells', 'clone 0', 'clone 1', 'clone 2'], index=mu_index).fillna(0)
+        # df['clone'] = pd.np.empty((len(df), 0)).tolist()
 
         for mu in mu_index:
             for leaf in leaves:
                 if mu in leaf.inherited_mu or mu in leaf.own_mu:
                     df.at[mu, 'Number of cells'] += 1
+                    df.at[mu, f'clone {leaf.clone}'] = True
+
+        df = df.replace(0, False)
         return df
 
     @staticmethod
     def sfs(df):
-        return df['Number of cells'].value_counts().sort_index()
+        clone_0 = df.loc[df['clone 0'] == True].value_counts().sort_index()
+        clone_1 = df.loc[df['clone 1'] == True].value_counts().sort_index()
+        clone_2 = df.loc[df['clone 2'] == True].value_counts().sort_index()
+
+        clone_0 = clone_0.reset_index(level=[1, 2, 3]).drop(columns=['clone 0', 'clone 1', 'clone 2'], axis=1)
+        clone_1 = clone_1.reset_index(level=[1, 2, 3]).drop(columns=['clone 0', 'clone 1', 'clone 2'], axis=1)
+        clone_2 = clone_2.reset_index(level=[1, 2, 3]).drop(columns=['clone 0', 'clone 1', 'clone 2'], axis=1)
+
+        return clone_0, clone_1, clone_2
 
     def create_mutation_table(self):
         leaves = self.tree.extant(self.tree.tree)
