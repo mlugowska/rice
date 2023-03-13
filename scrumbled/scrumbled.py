@@ -113,4 +113,4 @@ while True:
 df_sorted.loc['freq'] = df_sorted_by_freq.loc['freq']
 
 write_to_excel(df_sorted,
-               '/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-151-mu-occur sorted orig.xlsx')
+               '/birth_death/results/1x/old/stats/0-N-151-mu-occur sorted orig.xlsx')

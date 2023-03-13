@@ -11,6 +11,11 @@ from ete3 import Tree, TreeNode
 
 class BDTree:
     def __init__(self, bd, b_0, b_1, b_2, T=0, s=0):
+        self.N_2 = None
+        self.N_1 = None
+        self.N_0 = None
+        self.mu_clone_1 = None
+        self.mu_clone_2 = None
         self.bd = bd
         self.b_0 = b_0
         self.b_1 = b_1
@@ -45,9 +50,9 @@ class BDTree:
 
         tree.dist = 0.0
         tree.add_feature('extinct', False)
-        tree.add_feature('own_mu', list())
-        tree.add_feature('inherited_mu', list())
-        tree.add_feature('time_mu', list())
+        tree.add_feature('own_mu', [])
+        tree.add_feature('inherited_mu', [])
+        tree.add_feature('time_mu', [])
         tree.add_feature('clone', 0)
         tree.name = f'{0}'
 
@@ -57,44 +62,44 @@ class BDTree:
             if self.bd.N == 0:  # population is extinct
                 break
 
-            self.bd.b = self.b_0
-            nodes_c0 = [node for node in self.sort_nodes(tree) if node.clone == 0]
-            if nodes_c0:
-                t_i, event, c_i = self.bd.next_event(N_i=len(nodes_c0)) # draw next event
-                node = nodes_c0[c_i - 1]
-
-            if self.clone_1_exsists:
-                nodes_c1 = [node for node in self.sort_nodes(tree) if node.clone == 1]
-                if nodes_c1:
-                    self.bd.b = self.b_1
-                    clone_1_t_i, clone_1_event, clone_1_c_i = self.bd.next_event(N_i=len(nodes_c1), subclone=True)
-
-                    if not nodes_c0 or (nodes_c0 and clone_1_t_i < t_i):
-                        print(f'=========================================================== event for clone 1')
-                        # self.bd_1.t_history.append(self.bd.t + clone_1_t_i)
-                        # self.bd_1.c.append(clone_1_c_i)
-                        # self.bd_1.events.append(clone_1_event)
-                        t_i, event, c_i = clone_1_t_i, clone_1_event, clone_1_c_i
-                        node = nodes_c1[c_i - 1]
-
-            if self.clone_1_exsists and self.clone_2_exsists:
-                nodes_c2 = [node for node in self.sort_nodes(tree) if node.clone == 2]
-                if nodes_c2:
-                    self.bd.b = self.b_2
-                    clone_2_t_i, clone_2_event, clone_2_c_i = self.bd.next_event(N_i=len(nodes_c2), subclone=True)
-
-                    if clone_2_t_i < t_i:
-                        print(f'=========================================================== event for clone 2')
-                        t_i, event, c_i = clone_2_t_i, clone_2_event, clone_2_c_i
-                        node = nodes_c2[c_i - 1]
-
-            self.bd.t += t_i  # update current time
-
             if self.bd.t > T:
                 leaf_nodes = self.extant(tree)
                 for leaf in leaf_nodes:
                     leaf.dist += (T - self.bd.t_history[-1])
                 break
+
+            nodes_c2 = [node for node in self.sort_nodes(tree) if node.clone == 2]
+            nodes_c1 = [node for node in self.sort_nodes(tree) if node.clone == 1]
+            nodes_c0 = [node for node in self.sort_nodes(tree) if node.clone == 0]
+
+            self.N_0 = len(nodes_c0)
+            self.N_1 = len(nodes_c1)
+            self.N_2 = len(nodes_c2)
+
+            if not nodes_c1:
+                self.clone_1_exsists = False
+            if not nodes_c2:
+                self.clone_2_exsists = False
+
+            if self.clone_1_exsists:
+                clone_1 = {'b': self.b_1, 'N': len(nodes_c1), 'd': self.bd.d, 't': t_clone_1}
+                clone_2 = None
+
+                if self.clone_2_exsists:
+                    clone_2 = {'b': self.b_2, 'N': len(nodes_c2), 'd': self.bd.d, 't': t_clone_2}
+            else:
+                clone_1, clone_2 = None, None
+
+            t_i, event, c_i, clone = self.bd.next_event(clone_1=clone_1, clone_2=clone_2)  # draw next event
+
+            if clone == 0:
+                node = nodes_c0[c_i - 1]
+            elif clone == 1:
+                node = nodes_c1[c_i - 1]
+            elif clone == 2:
+                node = nodes_c2[c_i - 1]
+
+            self.bd.t += t_i  # update current time
 
             leaf_nodes = self.extant(tree)
 
@@ -103,21 +108,24 @@ class BDTree:
 
             if self.create_clone_1 and self.bd.t >= s and event == 2 and node.clone == 0:
                 print(f'=========================================================== clone 1 from {node.name} !!!!!!!!')
-                # import pdb; pdb.set_trace()
                 node.clone = min(node.clone + 1, 2)
                 t_clone_1 = self.bd.t - node.dist
+                self.mu_clone_1 = self.bd.t
                 print(f'=========================================================== t clone 1 {t_clone_1} !!!!!!!!')
                 self.create_clone_1 = False
                 self.clone_1_exsists = True
 
-            if self.clone_1_exsists and self.create_clone_2 and self.bd.t >= 1.5 * s and event == 2 and node.clone == 1:
+            if self.clone_1_exsists and self.create_clone_2 and self.bd.t >= 50 + s and event == 2 and node.clone == 1:
                 print(f'=========================================================== clone 2 from {node.name} !!!!!!!!')
                 node.clone = min(node.clone + 1, 2)
                 t_clone_2 = self.bd.t - node.dist
+                self.mu_clone_2 = self.bd.t
                 print(f'=========================================================== t clone 2 {t_clone_2} !!!!!!!!')
                 self.create_clone_2 = False
                 self.clone_2_exsists = True
 
+            print(f'=========================================================== event for clone: {clone}')
+            print(f'=========================================================== event for node clone: {node.clone}')
             if event == 0:
                 self.bd.N += 1
 
@@ -125,9 +133,9 @@ class BDTree:
                     child_node = Tree()
                     child_node.dist = 0.0
                     child_node.add_feature('extinct', False)
-                    child_node.add_feature('own_mu', list())
-                    child_node.add_feature('inherited_mu', list())
-                    child_node.add_feature('time_mu', list())
+                    child_node.add_feature('own_mu', [])
+                    child_node.add_feature('inherited_mu', [])
+                    child_node.add_feature('time_mu', [])
                     child_node.add_feature('clone', node.clone)
                     child_node.name = f'{node.name}{_}'
 
@@ -160,11 +168,7 @@ class BDTree:
 
         if not self.bd.events.count(0):
             return None
-
-        nodes_c2 = len([node for node in self.extant(tree) if node.clone == 2])
-        nodes_c1 = len([node for node in self.extant(tree) if node.clone == 1])
-        nodes_c0 = len([node for node in self.extant(tree) if node.clone == 0])
-        print(f"clone 0: {nodes_c0}, clone 1: {nodes_c1}, clone 2: {nodes_c2}")
+        print(f"clone 0: {self.N_0}, clone 1: {self.N_1}, clone 2: {self.N_2}")
         return tree
 
     def write_tree(self, k_i, k):
@@ -194,17 +198,17 @@ class BDTree:
 
     def create_leave_paths(self):
         leaves = self.tree.get_leaves()
-        paths = {x.name: list() for x in leaves}
-        leaf_nodes = {x: list() for x in leaves}
+        paths = {x.name: [] for x in leaves}
+        leaf_nodes = {x: [] for x in leaves}
         return self.get_leaves_path(leaves, paths, leaf_nodes)
 
     def get_all_nodes(self):
         leaf_paths, leaf_nodes = self.create_leave_paths()
 
-        nodes_list = []
-        for node_path in leaf_nodes.values():
-            nodes_list.append(list(map(lambda x: x, node_path)))
-        return list(set([item for sublist in nodes_list for item in sublist]))
+        nodes_list = [
+            list(map(lambda x: x, node_path)) for node_path in leaf_nodes.values()
+        ]
+        return list({item for sublist in nodes_list for item in sublist})
 
     def get_interim_nodes(self):
         all_nodes = self.get_all_nodes()
@@ -217,14 +221,14 @@ class BDTree:
         interim_nodes = self.get_interim_nodes()
 
         for node in interim_nodes:
-            leaf_nodes[node] = list()
-            leaf_paths[node.name] = list()
+            leaf_nodes[node] = []
+            leaf_paths[node.name] = []
 
         return self.get_leaves_path(interim_nodes, leaf_paths, leaf_nodes)
 
     def expected_mutations_number(self):
         nodes = self.get_all_nodes()
-        return np.around(sum([node.dist for node in nodes]) * self.bd.mu)
+        return np.around(sum(node.dist for node in nodes) * self.bd.mu)
 
     def get_root_node(self):
         return self.tree.get_tree_root()

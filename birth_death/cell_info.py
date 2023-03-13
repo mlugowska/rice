@@ -2,7 +2,8 @@ import pandas as pd
 
 
 class Cells:
-    def __init__(self, tree) -> None:
+    def __init__(self, tree, bd) -> None:
+        self.bd = bd
         self.tree = tree
         self.about = {x.name: {} for x in self.tree.get_all_nodes()}
 
@@ -45,23 +46,28 @@ class Cells:
             self.about[node.name].update({'own_mu': node.own_mu})
             self.about[node.name].update({'inherited_mu': node.inherited_mu})
 
+    def add_clone(self):
+        nodes = self.tree.get_all_nodes()
+
+        for node in nodes:
+            self.about[node.name].update({'clone': node.clone})
+
     def check_cell_is_alive(self, df):
         leaves = self.tree.extant(self.tree.tree)
         leaf_names = [leaf.name for leaf in leaves]
-        return df.assign(is_alive=[True if cell_index in leaf_names else False for cell_index in df.index])
+        return df.assign(
+            is_alive=[cell_index in leaf_names for cell_index in df.index]
+        )
 
     def create_dataframe(self):
         df = pd.DataFrame(self.about).transpose()
         return self.check_cell_is_alive(df)
 
     def get_mutations_number(self, leaves):
-        mu_index = list()
+        mu_index = []
         for leaf in leaves:
-            for inherited_mu in leaf.inherited_mu:
-                mu_index.append(inherited_mu)
-            for own_mu in leaf.own_mu:
-                mu_index.append(own_mu)
-
+            mu_index.extend(iter(leaf.inherited_mu))
+            mu_index.extend(iter(leaf.own_mu))
         # if self.tree.get_root_node().own_mu:
         #     return list(set(mu_index).difference(self.tree.get_root_node().own_mu))
 
@@ -72,7 +78,6 @@ class Cells:
         mu_index = self.get_mutations_number(leaves)
 
         df = pd.DataFrame(columns=['Number of cells', 'clone 0', 'clone 1', 'clone 2'], index=mu_index).fillna(0)
-        # df['clone'] = pd.np.empty((len(df), 0)).tolist()
 
         for mu in mu_index:
             for leaf in leaves:

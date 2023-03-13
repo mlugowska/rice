@@ -17,23 +17,27 @@ def show_tree(tree, k=None, k_i=None, N=None):
     if isinstance(tree, str):
         tree = Tree(tree)
     ts = TreeStyle()
-    ts.scale = 120
+    ts.show_branch_length = True
+    ts.branch_vertical_margin = 20
+    ts.scale = 10
     ts.rotation = 90
     ts.force_topology = False
 
     lstyle = NodeStyle()
-    lstyle["fgcolor"] = "green"
-    lstyle["size"] = 1.5
+    lstyle["size"] = 2
 
     nstyle = NodeStyle()
     nstyle["fgcolor"] = "brown"
     nstyle["size"] = 0.5
 
+    colors = {'0': 'blue', '1': "green", '2': 'red'}
+
     for node in tree.traverse():
         if node.is_leaf():
+            lstyle["fgcolor"] = colors[f'{node.clone}']
             node.set_style(lstyle)
         else:
-            node.add_face(TextFace(node.name, tight_text=True, fsize=3), column=0, position="branch-bottom")
+            # node.add_face(TextFace(f'name: {node.name}', tight_text=True, fsize=3), column=0, position="branch-bottom")
             node.set_style(nstyle)
 
         if node.own_mu:
@@ -44,14 +48,23 @@ def show_tree(tree, k=None, k_i=None, N=None):
             face.margin_bottom = 3
             node.add_face(face, column=0, position='branch-top')
 
-        node.add_face(TextFace(round(node.dist, 3), tight_text=True, fsize=2), column=0, position="float")
+        node.add_face(TextFace(f'clone: {node.clone}', tight_text=True, fsize=4), column=1, position="branch-bottom")
 
-    tree.show(tree_style=ts)
-    tree.render(f'/Users/magdalena/PycharmProjects/rice/birth-death/results/{k}x/trees/{k_i}-N-{N}.pdf')
+    # tree.show(tree_style=ts)
+    tree.render(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/trees/0-N-{N}.pdf', tree_style=ts, dpi=500)
+
+
+# # TODO Rename this here and in `show_tree`
+def _extracted_from_show_tree_9(arg0, arg1):
+    result = NodeStyle()
+    result["fgcolor"] = arg0
+    result["size"] = arg1
+
+    return result
 
 
 def count_extinct_bd(bd_list):
-    return sum([bd.extinct() for bd in bd_list])
+    return sum(bd.extinct() for bd in bd_list)
 
 
 def remove_extinct_bd(bd_list):
