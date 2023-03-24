@@ -17,13 +17,19 @@ from utils import generate_tree, calculate_mean_birthtime, calculate_mean_deatht
 set up input parameters
 """
 
-b = .0162
-d = .01
+b_0 = .006
+b_1 = .026
+b_2 = .126
+
+d_0 = .001
+d_1 = .001
+d_2 = .001
 mu = .1
 N0 = 1
 
-T = 220  # total time for running each simulation
-s = 130  # time of new clone creation
+T = 260  # total time for running each simulation
+t_1 = 100  # time of new clone 1 creation
+t_2 = 160  # time of new clone 2 creation
 k = 1  # number of simulations to repeat
 bd_list = []  # list to save all simulations
 tree_list = []
@@ -34,30 +40,27 @@ dt = 0.05
 m_dt = np.around(np.arange(0, T + dt, dt), decimals=2)  # time sampling from 0 to T with step dt
 
 n_extinct = 0
+# import pdb; pdb.set_trace()
+# show_tree(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/trees/1-N-59.txt', N=59, k=1, k_i=1)
+
 """
 simulation of continuous-time birth-and-death processes at birth and death event times
 """
 k_i = 1
 
-for k_i in range(k):
+for _ in range(1):
     print(f'============= Create tree for k: {k_i} =============')
-    bd = BirthDeath(b=b, d=d, N0=N0, mu=mu)  # create a simulation
-    b_0 = b
-    b_1 = 5 * b
-    b_2 = 7 * b
-
-    d_0 = d
-    d_1 = d_0
-    d_2 = d_0
+    bd = BirthDeath(b=b_0, d=d_0, N0=N0, mu=mu)  # create a simulation
 
     start = time.time()
-    tree = generate_tree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, k_i=k_i, k=k, s=s)
+    tree = generate_tree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, k_i=k_i, k=k, t_1=t_1, t_2=t_2)
     end = time.time()
     print(f'run time: {end - start}')
 
     bd_list.append(bd)
     tree_list.append(tree)
-    show_tree(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/trees/{k_i}-N-410.txt', N=410)
+    if tree.tree:
+        show_tree(tree.tree, N=bd.N, k=k, k_i=k_i)
 
     #
     # # print(f'current population size = {bd.N}')
@@ -75,7 +78,7 @@ for k_i in range(k):
 for k_i, bd in enumerate(bd_list):
     print(f'============= Generate statistics for k: {k_i} =============')
     tree = tree_list[k_i]
-    if bd.N >= 100:
+    if bd.N >= 30:
         if tree.tree:
             about_cell = Cells(tree, bd)
             about_cell.add_cells_path()
@@ -99,7 +102,7 @@ for k_i, bd in enumerate(bd_list):
                 print(f'Number of mutations: {bd.events.count(2)}')
 
                 df_growth = pd.DataFrame(columns=['clone 0', 'clone 1', 'clone 2'])
-                df_growth.loc['exp. mutation time'] = [0, s, 50 + s]
+                df_growth.loc['exp. mutation time'] = [0, t_1, t_2]
                 df_growth.loc['mutation time'] = [0, tree.mu_clone_1, tree.mu_clone_2]
                 df_growth.loc['b'] = [b_0, b_1, b_2]
                 df_growth.loc['d'] = [d_0, d_1, d_2]
@@ -145,17 +148,17 @@ for k_i, bd in enumerate(bd_list):
                     histograms.sfs(df_sfs)
                     plt.savefig(
                         f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-sfs.png',
-                        dpi=300)
+                        dpi=500)
 
             df_cells.to_excel(
                 f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-stats.xlsx')
 
-        # df_mu_occur.to_excel(
-        #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-occur.xlsx')
-        #
-        # histograms.cells_life_distribution(df_cells, mean_lifetime)
-        # plt.savefig(
-        #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-life-distribution.png', dpi=300)
+            df_mu_occur.to_excel(
+                f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-occur.xlsx')
+            #
+            # histograms.cells_life_distribution(df_cells, mean_lifetime)
+            # plt.savefig(
+            #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-life-distribution.png', dpi=300)
 
 # """
 # mean lifetime distribution

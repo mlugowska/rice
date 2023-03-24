@@ -10,7 +10,7 @@ from ete3 import Tree, TreeNode
 
 
 class BDTree:
-    def __init__(self, bd, b_0, b_1, b_2, T=0, s=0):
+    def __init__(self, bd, b_0, b_1, b_2, T=0, t_1=0, t_2=0):
         self.N_2 = None
         self.N_1 = None
         self.N_0 = None
@@ -24,7 +24,7 @@ class BDTree:
         self.clone_2_exsists = False
         self.create_clone_1 = True
         self.create_clone_2 = True
-        self.tree = self.create_tree(T, s)
+        self.tree = self.create_tree(T=T, t_1=t_1, t_2=t_2)
 
     @staticmethod
     def extant(tree: Tree) -> List[TreeNode]:
@@ -41,7 +41,7 @@ class BDTree:
         sorted_names = sorted(leaf_names, key=len)
         return [tree.get_leaves_by_name(name)[0] for name in sorted_names]
 
-    def create_tree(self, T, s):
+    def create_tree(self, T, t_1, t_2):
         random.seed(1)
 
         mu_i = 0  # mutations counter
@@ -83,12 +83,14 @@ class BDTree:
 
             if self.clone_1_exsists:
                 clone_1 = {'b': self.b_1, 'N': len(nodes_c1), 'd': self.bd.d, 't': t_clone_1}
-                clone_2 = None
-
-                if self.clone_2_exsists:
-                    clone_2 = {'b': self.b_2, 'N': len(nodes_c2), 'd': self.bd.d, 't': t_clone_2}
+                # clone_2 = None
             else:
-                clone_1, clone_2 = None, None
+                clone_1 = None
+
+            if self.clone_2_exsists:
+                clone_2 = {'b': self.b_2, 'N': len(nodes_c2), 'd': self.bd.d, 't': t_clone_2}
+            else:
+                clone_2 = None
 
             t_i, event, c_i, clone = self.bd.next_event(clone_1=clone_1, clone_2=clone_2)  # draw next event
 
@@ -106,18 +108,22 @@ class BDTree:
             for leaf in leaf_nodes:
                 leaf.dist += t_i
 
-            if self.create_clone_1 and self.bd.t >= s and event == 2 and node.clone == 0:
-                print(f'=========================================================== clone 1 from {node.name} !!!!!!!!')
-                node.clone = min(node.clone + 1, 2)
-                t_clone_1 = self.bd.t - node.dist
-                self.mu_clone_1 = self.bd.t
-                print(f'=========================================================== t clone 1 {t_clone_1} !!!!!!!!')
-                self.create_clone_1 = False
-                self.clone_1_exsists = True
+            if self.create_clone_1 and self.bd.t >= t_1 and event == 2 and node.clone == 0:
+                if len(node.name) > 2:
 
-            if self.clone_1_exsists and self.create_clone_2 and self.bd.t >= 50 + s and event == 2 and node.clone == 1:
+                    print(f'=========================================================== clone 1 from {node.name} !!!!!!!!')
+                    node.clone = min(node.clone + 1, 2)
+                    clone_1_name = node.name
+                    t_clone_1 = self.bd.t - node.dist
+                    self.mu_clone_1 = self.bd.t
+                    print(f'=========================================================== t clone 1 {t_clone_1} !!!!!!!!')
+                    self.create_clone_1 = False
+                    self.clone_1_exsists = True
+
+            if self.clone_1_exsists and self.create_clone_2 and self.bd.t >= t_2 and event == 2 and node.clone == 1 and node.name != clone_1_name:
                 print(f'=========================================================== clone 2 from {node.name} !!!!!!!!')
                 node.clone = min(node.clone + 1, 2)
+                clone_2_name = node.name
                 t_clone_2 = self.bd.t - node.dist
                 self.mu_clone_2 = self.bd.t
                 print(f'=========================================================== t clone 2 {t_clone_2} !!!!!!!!')

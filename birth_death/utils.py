@@ -6,52 +6,56 @@ from numpy import log
 from tree import BDTree
 
 
-def generate_tree(bd, b_0, b_1, b_2, T, k_i, k, s):
-    tree = BDTree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, s=s)
+def generate_tree(bd, b_0, b_1, b_2, T, k_i, k, t_1, t_2):
+    tree = BDTree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, t_1=t_1, t_2=t_2)
     if tree.tree:
         tree.write_tree(k_i=k_i, k=k)
     return tree
 
 
-def show_tree(tree, k=None, k_i=None, N=None):
+def show_tree(tree, k=None, k_i=None, N=None, outfile=None, from_bd_process=True):
     if isinstance(tree, str):
         tree = Tree(tree)
     ts = TreeStyle()
     ts.show_branch_length = True
-    ts.branch_vertical_margin = 20
+    ts.branch_vertical_margin = 60
     ts.scale = 10
     ts.rotation = 90
     ts.force_topology = False
 
-    lstyle = NodeStyle()
-    lstyle["size"] = 2
-
-    nstyle = NodeStyle()
-    nstyle["fgcolor"] = "brown"
-    nstyle["size"] = 0.5
-
     colors = {'0': 'blue', '1': "green", '2': 'red'}
 
-    for node in tree.traverse():
-        if node.is_leaf():
-            lstyle["fgcolor"] = colors[f'{node.clone}']
-            node.set_style(lstyle)
-        else:
-            # node.add_face(TextFace(f'name: {node.name}', tight_text=True, fsize=3), column=0, position="branch-bottom")
-            node.set_style(nstyle)
+    if from_bd_process:
+        for node in tree.traverse():
+            # node.add_face(TextFace(f'clone: {node.clone}', tight_text=True, fsize=4), column=1, position="branch-bottom")
 
-        if node.own_mu:
-            face = TextFace(node.own_mu, tight_text=True, fsize=3)
-            face.margin_top = 3
-            face.margin_right = 3
-            face.margin_left = 3
-            face.margin_bottom = 3
-            node.add_face(face, column=0, position='branch-top')
+            node.img_style['hz_line_color'] = colors[f'{node.clone}']  # horizontal line color
+            node.img_style['vt_line_color'] = colors[f'{node.clone}']  # vertical line color
+            node.img_style['hz_line_width'] = 8  # vertical line color
+            node.img_style['vt_line_width'] = 8  # vertical line color
 
-        node.add_face(TextFace(f'clone: {node.clone}', tight_text=True, fsize=4), column=1, position="branch-bottom")
+            node.img_style['fgcolor'] = colors[f'{node.clone}']
+
+            # if node.own_mu:
+            #     face = TextFace(node.own_mu, tight_text=True, fsize=3)
+            #     face.margin_top = 3
+            #     face.margin_right = 3
+            #     face.margin_left = 3
+            #     face.margin_bottom = 3
+            #     node.add_face(face, column=0, position='branch-top')
+    else:
+        for node in tree.iter_leaves():
+            node.add_face(TextFace(f'clone: {node.clone}', tight_text=True, fsize=4), column=1,
+                          position="branch-bottom")
+
+            node.img_style['size'] = 8
+
+            node.img_style['fgcolor'] = colors[f'{node.clone}']
 
     # tree.show(tree_style=ts)
-    tree.render(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/trees/0-N-{N}.pdf', tree_style=ts, dpi=500)
+    if not outfile:
+        outfile = f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/trees/{k_i}-N-{N}.pdf'
+    tree.render(outfile, tree_style=ts, dpi=500)
 
 
 # # TODO Rename this here and in `show_tree`

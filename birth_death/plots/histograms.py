@@ -1,8 +1,5 @@
-import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib.patches import Patch
-from utils import calculate_mean_bd
 
 
 def normalize_N(df):
@@ -79,14 +76,51 @@ def cells_life_distribution(df, mean_lifetime):
 
 
 def sfs(df):
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(15, 15), dpi=80)
 
     colors = ["#264b96", "#27b376", '#bf212f']
-    df.plot(kind='bar', alpha=0.65, color=colors)
+
+    x_range = list(range(1, max(df.index)))
+
+    for number in x_range:
+        if number not in df.index:
+            df.at[number, 'clone 0'] = 0
+            df.at[number, 'clone 1'] = 0
+            df.at[number, 'clone 2'] = 0
+    df = df.sort_index()
+
+    df.plot.bar(alpha=0.65, color=colors, logy=True, fontsize=6, align='center')
 
     for p in ax.patches:
         ax.annotate(f'{p.get_height()}', (p.get_x() + 0.25, p.get_height() + 0.01))
 
-    ax.set_xlabel('Number of cells')
-    ax.set_ylabel('Number of mutations')
-    ax.set_title('Mean SFS')
+    ax.set_xlabel('Number of cells', fontsize=8)
+    ax.set_ylabel('Number of mutations', fontsize=8)
+    ax.set_title('Mean SFS', fontsize=10)
+
+
+# import os
+#
+# PATH = '/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats'
+# files = [file for file in os.listdir(PATH) if 'sfs' in file]
+#
+# N = 490
+# file = [stat for stat in files if f'{N}' in stat][0]
+#
+# df = pd.read_excel(f'{PATH}/{file}', index_col=0)
+# x_range = list(range(1, max(df.index)))
+#
+# for number in x_range:
+#     if number not in df.index:
+#         df.at[number, 'clone 0'] = 0
+#         df.at[number, 'clone 1'] = 0
+#         df.at[number, 'clone 2'] = 0
+# df = df.sort_index()
+# df.fillna(0, inplace=True)
+#
+# fig, ax = plt.subplots(figsize=(15, 15), dpi=80)
+# colors = ["#264b96", "#27b376", '#bf212f']
+# df.plot.bar(alpha=0.65, color=colors, logy=True, logx=True, fontsize=5, width=1., ax=ax)
+# # for p in ax.patches:
+# #     ax.annotate(f'{p.get_height()}', (p.get_x() + 0.25, p.get_height() + 0.01))
+# # plt.savefig(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/plots/{file[:-5]}.png', dpi=300)

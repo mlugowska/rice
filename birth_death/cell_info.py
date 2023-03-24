@@ -63,7 +63,8 @@ class Cells:
         df = pd.DataFrame(self.about).transpose()
         return self.check_cell_is_alive(df)
 
-    def get_mutations_number(self, leaves):
+    @staticmethod
+    def get_mutations_number(leaves):
         mu_index = []
         for leaf in leaves:
             mu_index.extend(iter(leaf.inherited_mu))
