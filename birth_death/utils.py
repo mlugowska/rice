@@ -4,6 +4,7 @@ from ete3 import TreeStyle, Tree, NodeStyle, TextFace
 from numpy import log
 
 from tree import BDTree
+PATH = '/Users/magdalena/PycharmProjects/rice/birth_death/results'
 
 
 def generate_tree(bd, b_0, b_1, b_2, T, k_i, k, t_1, t_2):
@@ -54,7 +55,7 @@ def show_tree(tree, k=None, k_i=None, N=None, outfile=None, from_bd_process=True
 
     # tree.show(tree_style=ts)
     if not outfile:
-        outfile = f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/trees/{k_i}-N-{N}.pdf'
+        outfile = f'{PATH}/N-{N}.pdf'
     tree.render(outfile, tree_style=ts, dpi=500)
 
 

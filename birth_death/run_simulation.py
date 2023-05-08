@@ -1,6 +1,8 @@
 """
 https://cmp.phys.ufl.edu/PHZ4710/files/unit3/birth-death.html
 """
+import logging
+import os
 import time
 
 import matplotlib.pyplot as plt
@@ -13,23 +15,28 @@ from plots import histograms
 from utils import generate_tree, calculate_mean_birthtime, calculate_mean_deathtime, \
     calculate_mean_lifetime, show_tree
 
+
+PATH = '/Users/magdalena/PycharmProjects/rice/birth_death/results'
+# logging.basicConfig(filename=f'{PATH}/bd_run.txt', level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
 """
 set up input parameters
 """
 
-b_0 = .006
-b_1 = .026
-b_2 = .126
+b_0 = .016
+b_1 = .041
+b_2 = .155
 
-d_0 = .001
-d_1 = .001
-d_2 = .001
-mu = .1
+d_0 = .01
+d_1 = .01
+d_2 = .01
+mu = .05
 N0 = 1
 
-T = 260  # total time for running each simulation
-t_1 = 100  # time of new clone 1 creation
-t_2 = 160  # time of new clone 2 creation
+T = 3500  # total time for running each simulation
+t_1 = 350  # time of new clone 1 creation
+t_2 = 500  # time of new clone 2 creation
 k = 1  # number of simulations to repeat
 bd_list = []  # list to save all simulations
 tree_list = []
@@ -48,7 +55,7 @@ simulation of continuous-time birth-and-death processes at birth and death event
 """
 k_i = 1
 
-for _ in range(1):
+for _ in range(k):
     print(f'============= Create tree for k: {k_i} =============')
     bd = BirthDeath(b=b_0, d=d_0, N0=N0, mu=mu)  # create a simulation
 
@@ -57,12 +64,9 @@ for _ in range(1):
     end = time.time()
     print(f'run time: {end - start}')
 
-    bd_list.append(bd)
-    tree_list.append(tree)
-    if tree.tree:
-        show_tree(tree.tree, N=bd.N, k=k, k_i=k_i)
+    # bd_list.append(bd)
+    # tree_list.append(tree)
 
-    #
     # # print(f'current population size = {bd.N}')
     #
     # # create df with N(m_dt): population size at each time point
@@ -72,14 +76,10 @@ for _ in range(1):
     #     df_N = df_N.fillna(0)
     # df_N = bd.count_N_in_timestep(df_N, k_i + 1, m_dt)
 
-"""
-# generate cells statistics
-# """
-for k_i, bd in enumerate(bd_list):
-    print(f'============= Generate statistics for k: {k_i} =============')
-    tree = tree_list[k_i]
-    if bd.N >= 30:
+    if bd.N > 30:
         if tree.tree:
+            show_tree(tree.tree, N=bd.N, k=k, k_i=k_i)
+
             about_cell = Cells(tree, bd)
             about_cell.add_cells_path()
             about_cell.add_lifetimes(T)
@@ -121,7 +121,7 @@ for k_i, bd in enumerate(bd_list):
                 df_growth.loc['no. mu [all clones]'] = [int(bd.events.count(2)), np.nan, np.nan]
 
                 df_growth.to_excel(
-                        f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-clones-stats.xlsx')
+                        f'{PATH}/N-{bd.N}/N-{bd.N}-clones-stats.xlsx')
 
                 if not bd.extinct():
                     df_mu_freq = about_cell.calculate_mutation_frequency()
@@ -138,23 +138,18 @@ for k_i, bd in enumerate(bd_list):
                         "clone 2": df[df['clone'] == 2][0]
                     }, index=df.index.drop_duplicates().sort_values())
 
-                    # sfs_list.append(df_sfs)
-
-                    # df_mu_freq.to_excel(
-                    #     f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-freq.xlsx')
                     df_sfs.to_excel(
-                        f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-sfs.xlsx')
+                        f'{PATH}/N-{bd.N}/N-{bd.N}-sfs.xlsx')
 
-                    histograms.sfs(df_sfs)
-                    plt.savefig(
-                        f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/plots/{k_i}-N-{bd.N}-sfs.png',
-                        dpi=500)
+                    # histograms.sfs(df_sfs)
+                    # plt.savefig(
+                    #     f'{PATH}/N-{bd.N}/N-{bd.N}-sfs.png', dpi=500)
 
             df_cells.to_excel(
-                f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-stats.xlsx')
+                f'{PATH}/N-{bd.N}/N-{bd.N}-stats.xlsx')
 
             df_mu_occur.to_excel(
-                f'/Users/magdalena/PycharmProjects/rice/birth_death/results/{k}x/stats/{k_i}-N-{bd.N}-mu-occur.xlsx')
+                f'{PATH}/N-{bd.N}/N-{bd.N}-mu-occur.xlsx')
             #
             # histograms.cells_life_distribution(df_cells, mean_lifetime)
             # plt.savefig(

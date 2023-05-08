@@ -1,7 +1,6 @@
 import random
 
 import numpy as np
-
 import pandas as pd
 
 
@@ -27,7 +26,22 @@ class BirthDeath:
         self.t_events = []
         self.is_extinct = self.extinct()
 
-    def analytic(self, dt: np.ndarray):
+        # check for valid parameter values
+        assert self.N > 0, "Population size must be greater than zero"
+        assert self.b >= 0 and self.d >= 0, "Birth and death rates must be non-negative"
+
+        if self.mu is not None:
+            assert self.mu >= 0, "Mutation rate must be non-negative"
+
+    def compute_analytic_solution(self, dt: np.ndarray) -> np.ndarray:
+        """
+        Compute the analytic solution for the population size.
+
+        :param dt: np.ndarray, time intervals for computing the solution
+        :return: np.ndarray, the analytic solution for the population size
+        """
+        if not isinstance(dt, np.ndarray):
+            raise TypeError("dt must be an np.ndarray")
         return self.N * np.exp((self.b - self.d) * dt)
 
     def next_event(self, clone_1, clone_2):
@@ -38,26 +52,10 @@ class BirthDeath:
         T: float, simulation time horizon
 
         :return:
-        t: float, waiting time before next event (birth or death)
-        event: int, 0 means birth and 1 means death
+        t: float, waiting time before next event (birth, death or mutation)
+        event: int, 0 means birth, 1 means death, and 2 means mutation
         """
 
-        """
-        Method 1. to determine next event type
-
-        # scale param: is an inverse of rate (odwrotność współczynnika)
-        t_b = np.random.exponential(
-            scale=1 / b_rate)  # draw a random number from exponential dist as expected birth time
-        t_d = np.random.exponential(
-            scale=1 / d_rate)  # draw a random number from exponential dist as expected death time
-
-        if t_b < t_d:  # birth happens first
-            event = 0  # 0 to label birth
-            return t_b, event
-        event = 1  # death happens first, 1 to label death
-        return t_d, event
-
-        """
         random.seed(10)
         # --------- get clone data
         if clone_1:
@@ -94,7 +92,7 @@ class BirthDeath:
             N_i = N_2
 
         # --------- time to next event
-        b_rate = (N_0 * self.b) + (N_1 * b_1) + (N_2 * b_2) # total birth rate
+        b_rate = (N_0 * self.b) + (N_1 * b_1) + (N_2 * b_2)  # total birth rate
         d_rate = (N_0 * self.d) + (N_1 * d_1) + (N_2 * d_2)  # total death rate
 
         if self.mu:
@@ -129,8 +127,8 @@ class BirthDeath:
         for m in m_dt:
             for index, t_i in enumerate(self.t_history):
                 if (
-                    index < len(self.t_history) - 1
-                    and t_i <= m < self.t_history[index + 1]
+                        index < len(self.t_history) - 1
+                        and t_i <= m < self.t_history[index + 1]
                 ):
                     df.at[k_i, m] = self.N_history[index]
             if m > self.t_history[-1]:
