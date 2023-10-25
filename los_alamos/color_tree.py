@@ -29,9 +29,9 @@ tree = Tree('/Users/magdalena/PycharmProjects/rice/birth_death/results/T=260/los
 
 # ---------- read clone info
 N = 1118
-df = pd.read_excel(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-{N}-stats.xlsx',
+df = pd.read_excel('/Users/magdalena/PycharmProjects/rice/birth_death/results/40/N-709-stats.xlsx',
                    index_col=0, dtype=str)
-mu = pd.read_excel(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-{N}-mu-occur.xlsx',
+mu = pd.read_excel('/Users/magdalena/PycharmProjects/rice/birth_death/results/40/N-709-mu-occur.xlsx',
                    dtype=str)
 mu = mu.set_index(keys=['Unnamed: 0'])
 clone = df['clone']
@@ -39,7 +39,7 @@ clone = df['clone']
 for index in mu.index:
     mu.at[index, 'clone'] = int(clone[index])
 mu = mu.astype(int)
-mu.to_excel(f'/Users/magdalena/PycharmProjects/rice/birth_death/results/1x/stats/0-N-{N}-mutation-table-clones.xlsx')
+mu.to_excel('/Users/magdalena/PycharmProjects/rice/birth_death/results/40/N-709--mutation-table-clones.xlsx')
 
 # ---------- add clone info to node
 tree.add_feature('clone', 0)

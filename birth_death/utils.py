@@ -1,16 +1,19 @@
+from typing import List
+
 import numpy as np
 import pandas as pd
 from ete3 import TreeStyle, Tree, NodeStyle, TextFace
 from numpy import log
 
 from tree import BDTree
+
 PATH = '/Users/magdalena/PycharmProjects/rice/birth_death/results'
 
 
 def generate_tree(bd, b_0, b_1, b_2, T, k_i, k, t_1, t_2):
-    tree = BDTree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, t_1=t_1, t_2=t_2)
+    tree = BDTree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, t_1=t_1, t_2=t_2, k=k)
     if tree.tree:
-        tree.write_tree(k_i=k_i, k=k)
+        tree.write_tree()
     return tree
 
 
@@ -117,3 +120,7 @@ def mean_sfs(df_list):
     df_concat = pd.concat(df_list)
     by_row_index = df_concat.groupby(df_concat.index)
     return by_row_index.mean().apply(np.floor).astype(int)
+
+
+def count_extinct_bd_processes(bd_list: List) -> str:
+    return f'Number of extinct processes: {count_extinct_bd(bd_list)}'

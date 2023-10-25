@@ -2,6 +2,8 @@
 http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#trees
 https://github.com/tresoldi/ngesh/blob/866b90003019a34eb297a543e22d2aea8ddffc31/src/ngesh/random_tree.py#L26
 """
+
+import contextlib
 import logging
 import os
 import random
@@ -14,11 +16,9 @@ PATH = '/Users/magdalena/PycharmProjects/rice/birth_death/results'
 logging.basicConfig(filename=f'{PATH}/bd_run.txt', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# PATH = '/net/ascratch/people/plgmlugowska/rice'
-
 
 class BDTree:
-    def __init__(self, bd, b_0, b_1, b_2, T=0, t_1=0, t_2=0):
+    def __init__(self, bd, b_0, b_1, b_2, k, T=0, t_1=0, t_2=0):
         self.N_2 = None
         self.N_1 = None
         self.N_0 = None
@@ -31,7 +31,8 @@ class BDTree:
         self.clone_1_exsists = False
         self.clone_2_exsists = False
         self.create_clone_1 = True
-        self.create_clone_2 = True
+        self.create_clone_2 = False
+        self.k = k
         self.tree = self.create_tree(T=T, t_1=t_1, t_2=t_2)
 
     @staticmethod
@@ -132,7 +133,8 @@ class BDTree:
             leaf_nodes = self.extant(tree)
 
             # if self.bd.t > T:
-            if self.bd.N >= 500:
+            max_cell = 700 + self.k
+            if self.bd.N >= max_cell:
                 for leaf in leaf_nodes:
                     leaf.dist += (self.bd.t - self.bd.t_history[-1])
                 break
@@ -179,14 +181,21 @@ class BDTree:
             self.bd.c.append(c_i)
             self.bd.events.append(event)
 
+            if self.N_0 >= 40 and self.N_1 <= 10:
+                break
+
+            if self.N_1 >= 40 and self.N_0 <= 10:
+                break
+
         if self.bd.events.count(0) == 0:
             return None
 
         print(f"clone 0: {self.N_0}, clone 1: {self.N_1}, clone 2: {self.N_2}")
         return tree
 
-    def write_tree(self, k_i, k):
-        os.mkdir(f'{PATH}/N-{self.bd.N}')
+    def write_tree(self):
+        with contextlib.suppress(FileExistsError):
+            os.mkdir(f'{PATH}/N-{self.bd.N}')
         self.tree.write(features=['name', 'dist', 'own_mu', 'inherited_mu', 'clone'], format_root_node=True, format=1,
                         outfile=f'{PATH}/N-{self.bd.N}/N-{self.bd.N}-tree.txt')
 
