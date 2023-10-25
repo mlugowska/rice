@@ -1,6 +1,8 @@
 """
 plot simulations with mean and median values
 """
+from typing import List
+
 from birth_death_model import BirthDeath
 from utils import *
 
@@ -35,4 +37,15 @@ def plot_mean_and_median(m_dt: np.ndarray, df: pd.DataFrame):
 def plot_analytic(dt: np.ndarray, b, d, N0):
     N = BirthDeath(b, d, N0).analytic(dt=dt)
     plt.plot(dt, log(N), label='analytic', color='brown')
+
+
+def plot_mean_lifetime_distribution(mean_lifetimes: List[float], filename: str) -> None:
+    plt.figure()
+    plt.hist(mean_lifetimes, density=True, alpha=0.65, bins=15, color='steelblue')
+    plt.xlabel('Lifetime')
+    plt.ylabel('Frequency')
+    plt.title('Mean lifetimes distribution')
+    plt.legend(['lifetime', 'density'])
+    plt.savefig(filename, dpi=300)
+
 

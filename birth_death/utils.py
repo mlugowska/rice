@@ -1,57 +1,78 @@
+from typing import List
+
 import numpy as np
 import pandas as pd
-from ete3 import TreeStyle, Tree, NodeStyle, TextFace, AttrFace
+from ete3 import TreeStyle, Tree, NodeStyle, TextFace
 from numpy import log
 
 from tree import BDTree
 
+PATH = '/Users/magdalena/PycharmProjects/rice/birth_death/results'
 
-def generate_tree(bd, T, k_i, k, Ki):
-    tree = BDTree(bd=bd, T=T, Ki=Ki)
-    # if tree.tree:
-    #     tree.write_tree(bd=bd, k_i=k_i, k=k)
+
+def generate_tree(bd, b_0, b_1, b_2, T, k_i, k, t_1, t_2):
+    tree = BDTree(bd=bd, b_0=b_0, b_1=b_1, b_2=b_2, T=T, t_1=t_1, t_2=t_2, k=k)
+    if tree.tree:
+        tree.write_tree()
     return tree
 
 
-def show_tree(tree, k, k_i, N):
+def show_tree(tree, k=None, k_i=None, N=None, outfile=None, from_bd_process=True):
     if isinstance(tree, str):
         tree = Tree(tree)
     ts = TreeStyle()
-    ts.scale = 120
+    ts.show_branch_length = True
+    ts.branch_vertical_margin = 60
+    ts.scale = 10
     ts.rotation = 90
     ts.force_topology = False
 
-    lstyle = NodeStyle()
-    lstyle["fgcolor"] = "green"
-    lstyle["size"] = 1.5
+    colors = {'0': 'blue', '1': "green", '2': 'red'}
 
-    nstyle = NodeStyle()
-    nstyle["fgcolor"] = "brown"
-    nstyle["size"] = 0.5
+    if from_bd_process:
+        for node in tree.traverse():
+            # node.add_face(TextFace(f'clone: {node.clone}', tight_text=True, fsize=4), column=1, position="branch-bottom")
 
-    for node in tree.traverse():
-        if node.is_leaf():
-            node.set_style(lstyle)
-        else:
-            node.add_face(TextFace(node.name, tight_text=True, fsize=3), column=0, position="branch-bottom")
-            node.set_style(nstyle)
+            node.img_style['hz_line_color'] = colors[f'{node.clone}']  # horizontal line color
+            node.img_style['vt_line_color'] = colors[f'{node.clone}']  # vertical line color
+            node.img_style['hz_line_width'] = 8  # vertical line color
+            node.img_style['vt_line_width'] = 8  # vertical line color
 
-        if node.own_mu:
-            face = TextFace(node.own_mu, tight_text=True, fsize=3)
-            face.margin_top = 3
-            face.margin_right = 3
-            face.margin_left = 3
-            face.margin_bottom = 3
-            node.add_face(face, column=0, position='branch-top')
+            node.img_style['fgcolor'] = colors[f'{node.clone}']
 
-        node.add_face(TextFace(round(node.dist, 3), tight_text=True, fsize=2), column=0, position="float")
+            # if node.own_mu:
+            #     face = TextFace(node.own_mu, tight_text=True, fsize=3)
+            #     face.margin_top = 3
+            #     face.margin_right = 3
+            #     face.margin_left = 3
+            #     face.margin_bottom = 3
+            #     node.add_face(face, column=0, position='branch-top')
+    else:
+        for node in tree.iter_leaves():
+            node.add_face(TextFace(f'clone: {node.clone}', tight_text=True, fsize=4), column=1,
+                          position="branch-bottom")
 
-    tree.show(tree_style=ts)
-    tree.render(f'/Users/magdalena/PycharmProjects/rice/birth-death/results/{k}x/trees/{k_i}-N-{N}.pdf')
+            node.img_style['size'] = 8
+
+            node.img_style['fgcolor'] = colors[f'{node.clone}']
+
+    # tree.show(tree_style=ts)
+    if not outfile:
+        outfile = f'{PATH}/N-{N}.pdf'
+    tree.render(outfile, tree_style=ts, dpi=500)
+
+
+# # TODO Rename this here and in `show_tree`
+def _extracted_from_show_tree_9(arg0, arg1):
+    result = NodeStyle()
+    result["fgcolor"] = arg0
+    result["size"] = arg1
+
+    return result
 
 
 def count_extinct_bd(bd_list):
-    return sum([bd.extinct() for bd in bd_list])
+    return sum(bd.extinct() for bd in bd_list)
 
 
 def remove_extinct_bd(bd_list):
@@ -99,3 +120,7 @@ def mean_sfs(df_list):
     df_concat = pd.concat(df_list)
     by_row_index = df_concat.groupby(df_concat.index)
     return by_row_index.mean().apply(np.floor).astype(int)
+
+
+def count_extinct_bd_processes(bd_list: List) -> str:
+    return f'Number of extinct processes: {count_extinct_bd(bd_list)}'
